@@ -23,7 +23,6 @@ class MyClass:
 ```python
 class Register:
   def __init__(self, rq, name, ip, udpSocket, tcpSocket):
-    self.message = "REGISTER"
     self.rq = rq
     self.name = name
     self.ip = ip
