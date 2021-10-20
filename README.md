@@ -31,7 +31,6 @@ class Register:
     
 class Registered:
   def __init__(self):
-    self.message = "REGISTERED"
     self.rq = rq
     
     ...
