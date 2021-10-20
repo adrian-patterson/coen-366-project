@@ -30,7 +30,7 @@ class Register:
     self.tcpSocket = tcpSocket
     
 class Registered:
-  def __init__(self):
+  def __init__(self, rq):
     self.rq = rq
     
     ...
