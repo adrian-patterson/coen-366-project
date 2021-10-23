@@ -1,11 +1,11 @@
 # Code Convention
-* For class names use PascalCase
-* For data members (objects) use camelCase
+* For class names use `PascalCase`
+* For data members `lower_case_with_underscores`
 ```python
 class MyClass:
   def __init__(self):
-    self.objectNumberOne = 0
-    self.objectNumberTwo = 0
+    self.object_number_one = 0
+    self.object_number_two = 0
 ```
 # Project Setup
 ## Data Classes
