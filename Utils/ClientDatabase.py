@@ -4,6 +4,7 @@ import csv
 
 
 class Database:
+
     DATABASE_PATH = "ClientDatabase.csv"
 
     def __init__(self):
@@ -18,10 +19,10 @@ class Database:
                 client = Register(row[0], row[1], row[2], row[3])
                 self.registered_clients.append(client)
 
-    def register_client(self, client):
+    def register_client(self, client, rq):
         with open(self.DATABASE_PATH, "a") as database:
             csv_writer = csv.writer(database)
-            csv_writer.writerow(client.to_csv_row())
+            csv_writer.writerow(client.to_csv_row().insert(0, rq))
 
         self.registered_clients.append(client)
 
