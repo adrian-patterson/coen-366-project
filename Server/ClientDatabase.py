@@ -1,4 +1,4 @@
-from Registration import Register
+from ClientData import ClientData
 import os
 import csv
 
@@ -7,24 +7,23 @@ class Database:
 
     DATABASE_PATH = "ClientDatabase.csv"
 
-    def __init__(self):
-        self.registered_clients = []
-        self.open_database()
-
     def open_database(self):
-        with open(self.DATABASE_PATH, "a+") as database:
-            csv_reader = csv.reader(database)
+        client_list = []
+        if os.path.exists(self.DATABASE_PATH):
+            with open(self.DATABASE_PATH, mode="r") as database:
+                csv_reader = csv.reader(database)
 
-            for row in csv_reader:
-                client = Register(row[0], row[1], row[2], row[3])
-                self.registered_clients.append(client)
+                for row in csv_reader:
+                    client = ClientData(row[1], row[2], row[3], row[4])
+                    client.rq = row[0]
+                    client_list.append(client)
 
-    def register_client(self, client, rq):
+        return client_list
+
+    def register_client(self, client):
         with open(self.DATABASE_PATH, "a") as database:
             csv_writer = csv.writer(database)
-            csv_writer.writerow(client.to_csv_row().insert(0, rq))
-
-        self.registered_clients.append(client)
+            csv_writer.writerow(client.to_csv_row())
 
     def de_register_client(self, client):
         clients = []
@@ -39,10 +38,6 @@ class Database:
             csv_writer = csv.writer(database)
             csv_writer.writerows(clients)
 
-        self.registered_clients.remove(client)
-
     def delete_database(self):
         if os.path.exists(self.DATABASE_PATH):
             os.remove(self.DATABASE_PATH)
-
-        self.registered_clients.clear()
