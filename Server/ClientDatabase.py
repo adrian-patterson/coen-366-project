@@ -25,13 +25,12 @@ class Database:
             csv_writer = csv.writer(database)
             csv_writer.writerow(client.to_csv_row())
 
-    def de_register_client(self, client):
+    def de_register_client(self, rq):
         clients = []
         with open(self.DATABASE_PATH, "r") as database:
             csv_reader = csv.reader(database)
             for row in csv_reader:
-                if row[0] != str(client.rq):
-                    print("Adding row " + str(row))
+                if row[0] != str(rq):
                     clients.append(row)
 
         with open(self.DATABASE_PATH, "w") as database:

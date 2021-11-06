@@ -8,7 +8,7 @@ class Register:
         self.tcp_socket = tcp_socket
 
     def __str__(self):
-        return f"""\
+        return f"""
     {self.TYPE}
         NAME:\t{self.name}
         IP:\t{self.ip_address}
