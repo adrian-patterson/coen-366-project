@@ -1,7 +1,7 @@
 from threading import Thread
 from ClientDatabase import Database
-from Utils.Registration import Register, Registered, RegisterDenied, DeRegister
 from ClientData import ClientData
+from Utils.Registration import Register, Registered, RegisterDenied, DeRegister
 from Utils.UtilityFunctions import *
 
 
@@ -38,7 +38,6 @@ class ServerRequestHandler(Thread):
             register_denied = RegisterDenied(client.rq, "Client with same name already registered!")
             log(register_denied)
             self.send_message_to_client(register_denied)
-
         else:
             self.client_list.append(client)
             self.client_database.register_client(client)
@@ -52,3 +51,8 @@ class ServerRequestHandler(Thread):
         self.client_list = [client for client in self.client_list if client.rq != de_register.rq]
         self.client_database.de_register_client(de_register.rq)
         log(de_register)
+
+    def publish(self):
+        print()
+        # add list of available files to client with RQ
+

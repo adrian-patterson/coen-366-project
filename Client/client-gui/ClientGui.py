@@ -1,4 +1,3 @@
-import sys
 import requests
 from flask import Flask, render_template, Response, request
 from Client import Client, RegisterWithServer, DeRegisterFromServer
@@ -19,13 +18,11 @@ def register():
     client.name = name
     registration = RegisterWithServer(client)
     registration.start()
-    return {'register': registration.join(timeout=2)}
+    return {'register': registration.join()}
 
 
 @app.route("/de_register", methods=["POST"])
 def de_register():
-    print("Trying to de REGISTER")
-    print(str(client))
     de_registration = DeRegisterFromServer(client)
     de_registration.start()
     de_registration.join()
