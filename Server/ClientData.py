@@ -11,7 +11,7 @@ class ClientData:
         self.list_of_available_files = []
 
     def __str__(self):
-        return f"""\
+        return """\
     CLIENT DATA
         RQ:\t{self.rq}
         NAME:\t{self.name}
