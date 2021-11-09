@@ -3,7 +3,7 @@ import socket
 from threading import Thread
 from Utils.Registration import Register, Registered, RegisterDenied, DeRegister
 from Utils.UtilityFunctions import *
-from Utils.Publishing import Publish, Published, PublishDenied
+from Utils.Publishing import Publish, Published, PublishDenied, Remove, RemoveDenied, Removed
 
 BUFFER_SIZE = 1024
 
@@ -94,10 +94,11 @@ class DeRegisterFromServer(Thread):
 
 class PublishFilesToServer(Thread):
 
-    def __init__(self, client):
+    def __init__(self, client,list_of_files_to_publish):
         super().__init__()
         self.client = client
         self.server_response = None
+        self.list_of_files_to_publish = list_of_files_to_publish
         self.result = None
         self.response_messages = {
             "PUBLISHED": self.published,
@@ -105,7 +106,7 @@ class PublishFilesToServer(Thread):
         }
 
     def run(self):
-        publish = Publish(self.client.rq, self.client.name, self.client.list_of_available_files)
+        publish = Publish(self.client.rq, self.client.name, self.list_of_files_to_publish)
         self.client.send_message_to_server(publish)
 
         try:
@@ -131,12 +132,51 @@ class PublishFilesToServer(Thread):
         log(publish_denied)
         return publish_denied.reason
 
+class RemoveFilesFromServer(Thread):
+    def __init__(self, client,list_of_files_to_remove):
+        super().__init__()
+        self.client = client
+        self.list_of_files_to_remove = list_of_files_to_remove
+        self.server_response = None
+        self.result = None
+        self.response_messages = {
+            "REMOVED": self.removed,
+            "REMOVE-DENIED": self.remove_denied
+        }
+    def run(self):
+        remove = Remove(self.client.rq,self.client.name,self.list_of_files_to_remove)
+        self.client.send_message_to_server(remove)
+        try:
+            self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
+            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+        except socket.error:
+            self.result = "Connection Timed Out"
+
+    def join(self, *args, **kwargs):
+        super().join()
+        return self.result
+
+    def removed(self):
+        removed = Removed(**bytes_to_object(self.server_response[0]))
+        log(removed)
+        return True
+
+    def remove_denied(self):
+        remove_denied = RemoveDenied(**bytes_to_object(self.server_response[0]))
+        log(remove_denied)
+        return remove_denied.reason
+
+
 
 client = Client()
+list = ['Test.txt']
 client.name = "Joe"
 d = RegisterWithServer(client)
 d.start()
 d.join()
-p = PublishFilesToServer(client)
+p = PublishFilesToServer(client,list)
 p.start()
 p.join()
+r= RemoveFilesFromServer(client,list)
+r.start()
+r.join()
