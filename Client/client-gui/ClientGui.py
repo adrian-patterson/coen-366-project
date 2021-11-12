@@ -1,6 +1,6 @@
 import requests
 from flask import Flask, render_template, Response, request
-from Client import Client, RegisterWithServer, DeRegisterFromServer
+from Client import Client, RegisterWithServer, DeRegisterFromServer, RemoveFilesFromServer
 
 app = Flask("__main__", static_url_path='', static_folder='build', template_folder='build')
 client = Client()
@@ -26,6 +26,14 @@ def de_register():
     de_registration = DeRegisterFromServer(client)
     de_registration.start()
     de_registration.join()
+    return Response(status=201)
+
+
+@app.route("/remove_files", methods=["POST"])
+def remove_files():
+    remove = RemoveFilesFromServer(client)
+    remove.start()
+    remove.join()
     return Response(status=201)
 
 

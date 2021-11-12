@@ -1,7 +1,9 @@
+import os
 import socket
 from threading import Thread
 from Utils.Registration import Register, Registered, RegisterDenied, DeRegister
 from Utils.UtilityFunctions import *
+from Utils.Publishing import Publish, Published, PublishDenied, Remove, RemoveDenied, Removed
 
 BUFFER_SIZE = 1024
 
@@ -27,11 +29,13 @@ class Client:
         self.udp_socket.sendto(bytes_to_send, self.SERVER_ADDRESS)
 
     def get_list_of_available_files(self):
-        print()
-        # os.chdir(clientfiles)
-        # get list of file names
-        # add file names to self.list_of_available...
-        # os.chdir(../) back into main directory
+        current_directory = os.getcwd()
+        path = 'ClientFiles'
+        os.chdir(path)
+        files = os.listdir()
+        for i in files:
+            self.list_of_available_files.append(i)
+        os.chdir(current_directory)
 
     def __del__(self):
         self.udp_socket.close()
@@ -90,19 +94,89 @@ class DeRegisterFromServer(Thread):
 
 class PublishFilesToServer(Thread):
 
-    def __init__(self, client):
+    def __init__(self, client,list_of_files_to_publish):
         super().__init__()
         self.client = client
-        # server response, response message, response type
+        self.server_response = None
+        self.list_of_files_to_publish = list_of_files_to_publish
+        self.result = None
+        self.response_messages = {
+            "PUBLISHED": self.published,
+            "PUBLISH-DENIED": self.publish_denied
+        }
 
     def run(self):
-        print()
-        # send list of client files to server in object Publish(
-            # wait for response (or timeout)
-            # create either publish denied or published objects
-            # send back true if published (i.e. it works) or send back reason for denial or timeout message
+        publish = Publish(self.client.rq, self.client.name, self.list_of_files_to_publish)
+        self.client.send_message_to_server(publish)
+
+        try:
+            self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
+            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+        except socket.error:
+            self.result = "Connection Timed Out"
 
     def join(self, *args, **kwargs):
         super().join()
-        # return result here
+        return self.result
 
+
+    def published(self):
+        #NOT SURE ABOUT THIS NEXT LINE
+        published = Published(**bytes_to_object(self.server_response[0]))
+        log(published)
+        return True
+
+    def publish_denied(self):
+        #NOT SURE ABOUT THIS NEXT LINE
+        publish_denied = PublishDenied(**bytes_to_object(self.server_response[0]))
+        log(publish_denied)
+        return publish_denied.reason
+
+class RemoveFilesFromServer(Thread):
+    def __init__(self, client,list_of_files_to_remove):
+        super().__init__()
+        self.client = client
+        self.list_of_files_to_remove = list_of_files_to_remove
+        self.server_response = None
+        self.result = None
+        self.response_messages = {
+            "REMOVED": self.removed,
+            "REMOVE-DENIED": self.remove_denied
+        }
+    def run(self):
+        remove = Remove(self.client.rq,self.client.name,self.list_of_files_to_remove)
+        self.client.send_message_to_server(remove)
+        try:
+            self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
+            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+        except socket.error:
+            self.result = "Connection Timed Out"
+
+    def join(self, *args, **kwargs):
+        super().join()
+        return self.result
+
+    def removed(self):
+        removed = Removed(**bytes_to_object(self.server_response[0]))
+        log(removed)
+        return True
+
+    def remove_denied(self):
+        remove_denied = RemoveDenied(**bytes_to_object(self.server_response[0]))
+        log(remove_denied)
+        return remove_denied.reason
+
+
+
+client = Client()
+list = ['Test.txt']
+client.name = "Joe"
+d = RegisterWithServer(client)
+d.start()
+d.join()
+p = PublishFilesToServer(client,list)
+p.start()
+p.join()
+r= RemoveFilesFromServer(client,list)
+r.start()
+r.join()
