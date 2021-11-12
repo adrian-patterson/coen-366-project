@@ -11,6 +11,18 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/client", methods=["GET"])
+def get_client_info():
+    return {
+        'rq': client.rq,
+        'name': client.name,
+        'ipAddress': client.ip_address,
+        'udpSocket': client.UDP_PORT,
+        'tcpSocket': client.tcp_socket,
+        'listOfAvailableFiles': client.list_of_available_files
+    }
+
+
 @app.route("/register", methods=["POST"])
 def register():
     register_request = request.get_json(force=True)
@@ -39,11 +51,11 @@ def shutdown():
 
 
 def start():
-    app.run(host='0.0.0.0', threaded=True, port=5001)
+    app.run(host='0.0.0.0', threaded=True, port=5002)
 
 
 def stop():
-    resp = requests.get('http://localhost:5001/shutdown')
+    resp = requests.get('http://localhost:5002/shutdown')
 
 
 start()

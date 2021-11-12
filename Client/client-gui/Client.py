@@ -7,8 +7,8 @@ BUFFER_SIZE = 1024
 
 
 class Client:
-    UDP_PORT = 8080
-    SERVER_ADDRESS = ("127.0.0.1", 8000)
+    UDP_PORT = 8000
+    SERVER_ADDRESS = ("127.0.0.1", 8090)
 
     def __init__(self):
         super().__init__()
@@ -20,6 +20,7 @@ class Client:
         self.udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.udp_socket.bind((self.ip_address, self.UDP_PORT))
         self.udp_socket.settimeout(3)
+        self.tcp_socket = None
         print("Client Live: " + str(self.udp_socket))
 
     def send_message_to_server(self, message):
@@ -32,6 +33,9 @@ class Client:
         # get list of file names
         # add file names to self.list_of_available...
         # os.chdir(../) back into main directory
+
+    def increment_rq(self):
+        self.rq += 1
 
     def __del__(self):
         self.udp_socket.close()
@@ -105,4 +109,13 @@ class PublishFilesToServer(Thread):
     def join(self, *args, **kwargs):
         super().join()
         # return result here
+
+
+client = Client()
+client.name = "Jin"
+
+registration_thread = RegisterWithServer(client)
+registration_thread.start()
+registration_thread.join()
+
 
