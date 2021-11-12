@@ -4,6 +4,7 @@ import csv
 
 
 class Database:
+
     DATABASE_PATH = "ClientDatabase.csv"
 
     def open_database(self):
@@ -20,16 +21,20 @@ class Database:
         return client_list
 
     def register_client(self, client):
-        with open(self.DATABASE_PATH, mode="a") as database:
+        with open(self.DATABASE_PATH, "a") as database:
             csv_writer = csv.writer(database)
             csv_writer.writerow(client.to_csv_row())
 
-    def de_register_client(self, rq):
-        with open(self.DATABASE_PATH, mode="r") as database:
+    def de_register_client(self, client):
+        clients = []
+        with open(self.DATABASE_PATH, "r") as database:
             csv_reader = csv.reader(database)
-            clients = [row for row in csv_reader if row[0] != str(rq)]
+            for row in csv_reader:
+                if row[0] != str(client.rq):
+                    print("Adding row " + str(row))
+                    clients.append(row)
 
-        with open(self.DATABASE_PATH, mode="w") as database:
+        with open(self.DATABASE_PATH, "w") as database:
             csv_writer = csv.writer(database)
             csv_writer.writerows(clients)
 
