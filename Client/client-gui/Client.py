@@ -34,8 +34,9 @@ class Client:
         path = 'ClientFiles'
         os.chdir(path)
         files = os.listdir()
-        for i in files:
-            self.list_of_available_files.append(i)
+        for file in files:
+            if not self.list_of_available_files.__contains__(file):
+                self.list_of_available_files.append(file)
         os.chdir(current_directory)
 
     def increment_rq(self):
@@ -98,7 +99,7 @@ class DeRegisterFromServer(Thread):
 
 class PublishFilesToServer(Thread):
 
-    def __init__(self, client,list_of_files_to_publish):
+    def __init__(self, client, list_of_files_to_publish):
         super().__init__()
         self.client = client
         self.server_response = None
@@ -123,21 +124,21 @@ class PublishFilesToServer(Thread):
         super().join()
         return self.result
 
-
     def published(self):
-        #NOT SURE ABOUT THIS NEXT LINE
+        # NOT SURE ABOUT THIS NEXT LINE
         published = Published(**bytes_to_object(self.server_response[0]))
         log(published)
         return True
 
     def publish_denied(self):
-        #NOT SURE ABOUT THIS NEXT LINE
+        # NOT SURE ABOUT THIS NEXT LINE
         publish_denied = PublishDenied(**bytes_to_object(self.server_response[0]))
         log(publish_denied)
         return publish_denied.reason
 
+
 class RemoveFilesFromServer(Thread):
-    def __init__(self, client,list_of_files_to_remove):
+    def __init__(self, client, list_of_files_to_remove):
         super().__init__()
         self.client = client
         self.list_of_files_to_remove = list_of_files_to_remove
@@ -147,8 +148,9 @@ class RemoveFilesFromServer(Thread):
             "REMOVED": self.removed,
             "REMOVE-DENIED": self.remove_denied
         }
+
     def run(self):
-        remove = Remove(self.client.rq,self.client.name,self.list_of_files_to_remove)
+        remove = Remove(self.client.rq, self.client.name, self.list_of_files_to_remove)
         self.client.send_message_to_server(remove)
         try:
             self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
