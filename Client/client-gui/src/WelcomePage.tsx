@@ -23,22 +23,22 @@ function PageBody(props: { classes: any }) {
   const { classes } = props;
 
   const onRegister = () => {
-    // setRegisterLoading(true);
-    // fetch("/register", {
-    //   method: "POST",
-    //   body: JSON.stringify({ name: enteredName }),
-    // })
-    //   .then((response) => response.json())
-    //   .then((data) => {
-    //     if (data.register === true) {
-    navigate(`app`);
-    //   } else {
-    //     enqueueSnackbar(`Failed to register: ${data.register}`, {
-    //       variant: "error" as VariantType,
-    //     });
-    //     setRegisterLoading(false);
-    //   }
-    // });
+    setRegisterLoading(true);
+    fetch("/register", {
+      method: "POST",
+      body: JSON.stringify({ name: enteredName }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.register === true) {
+          navigate(`app`);
+        } else {
+          enqueueSnackbar(`Failed to register: ${data.register}`, {
+            variant: "error" as VariantType,
+          });
+          setRegisterLoading(false);
+        }
+      });
   };
 
   return (
