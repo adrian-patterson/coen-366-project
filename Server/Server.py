@@ -28,9 +28,6 @@ class Server(Thread):
                 server_request_handler.join()
                 self.client_list = server_request_handler.client_list
 
-    def exit(self):
-        self.client_database.delete_database()
-
 
 def main():
     server = Server()
