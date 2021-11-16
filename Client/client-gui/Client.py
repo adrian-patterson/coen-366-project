@@ -289,9 +289,9 @@ class SearchFileFromDataBase(Thread):
 
 client = Client()
 client.name = "Jin"
-client.rq = 0
+client.rq = 5
 
-register_thread = RegisterWithServer(client)
+register_thread = DeRegisterFromServer(client)
 register_thread.start()
 register_thread.join()
 

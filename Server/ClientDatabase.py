@@ -24,12 +24,12 @@ class Database:
             csv_writer = csv.writer(database)
             csv_writer.writerow(client.to_csv_row())
 
-    def de_register_client(self, rq):
+    def de_register_client(self, name):
         with open(self.DATABASE_PATH, mode="r") as database:
             csv_reader = csv.reader(database)
-            clients = [row for row in csv_reader if row[0] != str(rq)]
+            clients = [row for row in csv_reader if row[1] != str(name)]
 
-        with open(self.DATABASE_PATH, mode="w") as database:
+        with open(self.DATABASE_PATH, mode="w", newline="") as database:
             csv_writer = csv.writer(database)
             csv_writer.writerows(clients)
 
