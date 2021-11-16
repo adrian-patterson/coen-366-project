@@ -291,7 +291,7 @@ client = Client()
 client.name = "Jin"
 client.rq = 5
 
-register_thread = DeRegisterFromServer(client)
+register_thread = PublishFilesToServer(client, ["hello.txt", "hi.txt"])
 register_thread.start()
 register_thread.join()
 

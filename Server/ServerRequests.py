@@ -75,6 +75,7 @@ class ServerRequestHandler(Thread):
         if client_exist:
             published = Published(publish.rq)
             self.send_message_to_client(published)
+            self.client_database.publish_filse(client.name, client.list_of_available_files)
             log(published)
         else:
             publish_denied = PublishDenied(publish.rq, "Client " + publish.name + " is not registered")
@@ -94,6 +95,7 @@ class ServerRequestHandler(Thread):
         if client_exist:
             removed = Removed(remove.rq)
             self.send_message_to_client(removed)
+            self.client_database.publish_filse(client.name, client.list_of_available_files)
             log(removed)
         else:
             remove_denied = RemoveDenied(remove.rq, "Client " + remove.name + " is not registered")
