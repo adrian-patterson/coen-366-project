@@ -1,3 +1,4 @@
+
 class RetrieveAll:
 
     def __init__(self, rq, **_):
@@ -11,7 +12,7 @@ class RetrieveAll:
         """
 
 
-class Retrieve:
+class Retrieve():
 
     def __init__(self, rq, list_of_clients, **_):
         self.TYPE = "RETRIEVE"
@@ -22,14 +23,30 @@ class Retrieve:
         return f"""
     {self.TYPE}
         RQ:\t{self.rq}
-        LIST OF CLIENTS:\t{self.list_of_clients}
+        LIST OF CLIENTS:\t{self.formatClientList()}
         """
+    
 
+    def printClientInfo(self, name, ip_address, tcp_socket, list_of_available_files):
+        return f"""
+        CLIENT INFO
+            NAME:\t{name}
+            IP:\t{ip_address}
+            TCP:\t{tcp_socket}
+            LIST OF AVAILABLE FILES:\t{list_of_available_files}
+            """
+        
+    def formatClientList(self):
+        prettyStr = "\n"
+        for client_info in self.list_of_clients:
+            prettyStr += self.printClientInfo(client_info["name"], 
+            client_info["ip_address"], client_info["tcp_socket"], client_info["list_of_available_files"]) + "\n"
+        return prettyStr
 
 class RetrieveInfoRequest:
 
     def __init__(self, rq, name, **_):
-        self.TYPE = "RETRIEVE-INFO-REQUEST"
+        self.TYPE = "RETRIEVE-INFOT"
         self.rq = rq
         self.name = name
 
@@ -44,7 +61,7 @@ class RetrieveInfoRequest:
 class RetrieveInfoResponse:
 
     def __init__(self, rq, name, ip_address, tcp_socket, list_of_available_files, **_):
-        self.TYPE = "RETRIEVE-INFO-RESPONSE"
+        self.TYPE = "RETRIEVE-INFOT"
         self.rq = rq
         self.name = name
         self.ip_address = ip_address

@@ -1,10 +1,11 @@
 from threading import Thread
 from ClientDatabase import Database
-from ClientData import ClientData
+from ClientData import ClientData, FileOwner,ClientInfo
 from Utils.FileTransfer import Download, DownloadError
 from Utils.Registration import Register, Registered, RegisterDenied, DeRegister
 from Utils.UtilityFunctions import *
 from Utils.Publishing import Publish, Published, PublishDenied, Remove, RemoveDenied, Removed
+from Utils.Retrieve import RetrieveAll, Retrieve, RetrieveError, RetrieveInfoRequest, RetrieveInfoResponse, SearchError, SearchFileRequest, SearchFileResponse
 
 
 class ServerRequestHandler(Thread):
@@ -22,6 +23,9 @@ class ServerRequestHandler(Thread):
             "DE-REGISTER": self.de_register,
             "PUBLISH": self.publish,
             "REMOVE": self.remove,
+            "RETRIEVE-ALL": self.retrieve_all,
+            "RETRIEVE-INFOT": self.retrieve_infot,
+            "SEARCH-FILE": self.search_file
         }
 
     def run(self):
@@ -95,3 +99,76 @@ class ServerRequestHandler(Thread):
             remove_denied = RemoveDenied(remove.rq, "Client " + remove.name + " is not registered")
             self.send_message_to_client(remove_denied)
             log(remove_denied)
+
+#TODO need to find a way to authenticate the request by the name of client who made a request
+#TODO possible to change the class ? such as adding a name to the class?
+    def retrieve_all(self):
+        retireve_all = RetrieveAll(**self.data)
+        log(retireve_all)
+        registered_client = True
+        client_info_list = []
+        for client in self.client_list:
+            client_info = ClientInfo(client.name, 
+            client.ip_address, client.tcp_socket, client.list_of_available_files).__dict__
+            client_info_list.append(client_info)
+        
+        if registered_client:
+            retrieve_all = Retrieve(retireve_all.rq, client_info_list)
+            self.send_message_to_client(retrieve_all)
+            log(retrieve_all)
+        else:
+            retrieve_error = RetrieveError(retireve_all.rq, "Client " + " is not registered")
+            self.send_message_to_client(retrieve_error)
+            log(retrieve_error)
+
+    def retrieve_infot(self):
+        retrieve_info_request = RetrieveInfoRequest(**self.data)
+        log(retrieve_info_request)
+        specific_client = None
+        for client in self.client_list:
+            if client.name == retrieve_info_request.name:
+                specific_client = client
+
+        if specific_client is not None:
+            retrieve_info_response = RetrieveInfoResponse(retrieve_info_request.rq,specific_client.name 
+            , specific_client.ip_address, specific_client.tcp_socket,
+            specific_client.list_of_available_files)
+            self.send_message_to_client(retrieve_info_response)
+            log(retrieve_info_response)
+        elif specific_client is None:
+            retrieve_error = RetrieveError(retrieve_info_request.rq, "Client " +
+             " is not registered")
+            self.send_message_to_client(retrieve_error)
+            log(retrieve_error)
+        else:
+            retrieve_error = RetrieveError(retrieve_info_request.rq, "Client " +
+            retrieve_info_request.name+ " is not registered")
+            self.send_message_to_client(retrieve_error)
+            log(retrieve_error)
+
+    def search_file(self):
+        search_file_request = SearchFileRequest(**self.data)
+        log(search_file_request)
+        file_owner_list = None
+        for client in self.client_list:
+            if (search_file_request.file_name not in client.list_of_available_files):
+                continue
+            file_owner = FileOwner(name = client.name, ip_address = client.ip_address, tcp_socket = client.tcp_socket)
+            file_owner_list.append(file_owner)
+
+        if file_owner_list is not None:
+            search_file_response = SearchFileResponse(search_file_request.rq, file_owner_list)
+            self.send_message_to_client(search_file_response)
+            log(search_file_response)
+        elif file_owner_list is None:
+            search_error = SearchError(search_file_request.rq, "Client " +
+             " is not registered")
+            self.send_message_to_client(search_error)
+            log(search_error)
+        else:
+            search_error = SearchError(search_file_request.rq, "Client " +
+            search_file_request.file+ " is not published")
+            self.send_message_to_client(search_error)
+            log(search_error)
+
+    
