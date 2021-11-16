@@ -34,12 +34,11 @@ class Retrieve():
             TCP:\t{tcp_socket}
             LIST OF AVAILABLE FILES:\t{list_of_available_files}
             """
-        
+
     def formatClientList(self):
         prettyStr = "\n"
         for client_info in self.list_of_clients:
-            prettyStr += self.printClientInfo(client_info["name"], 
-            client_info["ip_address"], client_info["tcp_socket"], client_info["list_of_available_files"]) + "\n"
+            prettyStr += self.printClientInfo(**client_info) + "\n"
         return prettyStr
         
 
@@ -120,9 +119,22 @@ class SearchFileResponse:
         return f"""
     {self.TYPE}
         RQ:\t{self.rq}
-        LIST OF CLIENTS:\t{self.list_of_clients}
+        LIST OF CLIENTS:\t{self.formatClientList()}
         """
 
+    def printClientInfo(self, name, ip_address, tcp_socket):
+        return f"""
+        CLIENT INFO
+            NAME:\t{name}
+            IP:\t{ip_address}
+            TCP:\t{tcp_socket}
+            """
+        
+    def formatClientList(self):
+        prettyStr = "\n"
+        for client_info in self.list_of_clients:
+            prettyStr += self.printClientInfo(**client_info) + "\n"
+        return prettyStr
 
 class SearchError:
 

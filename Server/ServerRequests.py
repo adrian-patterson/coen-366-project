@@ -1,6 +1,6 @@
 from threading import Thread
 from ClientDatabase import Database
-from ClientData import ClientData, FileOwner,ClientInfo
+from ClientData import ClientData
 from Utils.FileTransfer import Download, DownloadError
 from Utils.Registration import Register, Registered, RegisterDenied, DeRegister
 from Utils.UtilityFunctions import *
@@ -100,16 +100,14 @@ class ServerRequestHandler(Thread):
             self.send_message_to_client(remove_denied)
             log(remove_denied)
 
-#TODO need to find a way to authenticate the request by the name of client who made a request
-#TODO possible to change the class ? such as adding a name to the class?
     def retrieve_all(self):
         retireve_all = RetrieveAll(**self.data)
         log(retireve_all)
         registered_client = True
         client_info_list = []
         for client in self.client_list:
-            client_info = ClientInfo(client.name, 
-            client.ip_address, client.tcp_socket, client.list_of_available_files).__dict__
+            client_info = {"name":client.name, "ip_address" : client.ip_address, 
+            "tcp_socket": client.tcp_socket, "list_of_available_files":client.list_of_available_files}
             client_info_list.append(client_info)
         
         if registered_client:
@@ -153,7 +151,7 @@ class ServerRequestHandler(Thread):
         for client in self.client_list:
             if (search_file_request.file_name not in client.list_of_available_files):
                 continue
-            file_owner = FileOwner(name = client.name, ip_address = client.ip_address, tcp_socket = client.tcp_socket)
+            file_owner = {"name" :client.name, "ip_address" :client.ip_address, "tcp_socket" : client.tcp_socket}
             file_owner_list.append(file_owner)
 
         if file_owner_list is not None:
