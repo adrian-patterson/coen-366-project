@@ -60,7 +60,7 @@ class RegisterWithServer(Thread):
         }
 
     def run(self):
-        register = Register(self.client.name, self.client.ip_address, self.client.udp_socket.getsockname()[1],
+        register = Register(self.client.rq, self.client.name, self.client.ip_address, self.client.udp_socket.getsockname()[1],
                             "TCP SOCKET")
         self.client.send_message_to_server(register)
 
@@ -288,10 +288,10 @@ class SearchFileFromDataBase(Thread):
 
 
 client = Client()
-client.name = "Jio"
+client.name = "Jin"
 client.rq = 0
 
-register_thread = RetrieveClientInfoFromServer(client, "Jin")
+register_thread = RegisterWithServer(client)
 register_thread.start()
 register_thread.join()
 

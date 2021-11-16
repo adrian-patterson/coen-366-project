@@ -40,17 +40,17 @@ class ServerRequestHandler(Thread):
         log(register)
 
         client = ClientData(**register.__dict__)
-        client.rq = len(self.client_list)
+        client.rq = len(self.client_list) # client Id rather 
 
         if any(client.name == c.name for c in self.client_list):
-            register_denied = RegisterDenied(client.rq, "Client with same name already registered!")
+            register_denied = RegisterDenied(register.rq, "Client with same name already registered!")
             log(register_denied)
             self.send_message_to_client(register_denied)
         else:
             self.client_list.append(client)
             self.client_database.register_client(client)
 
-            registered = Registered(client.rq)
+            registered = Registered(register.rq)
             self.send_message_to_client(registered)
             log(registered)
 
