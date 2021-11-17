@@ -5,7 +5,7 @@ from Utils.FileTransfer import Download, DownloadError
 from Utils.Registration import Register, Registered, RegisterDenied, DeRegister
 from Utils.UtilityFunctions import *
 from Utils.Publishing import Publish, Published, PublishDenied, Remove, RemoveDenied, Removed
-
+from Utils.UpdateInformation import UpdateDenied, UpdateConfirmed, UpdateContact
 
 class ServerRequestHandler(Thread):
 
@@ -22,6 +22,7 @@ class ServerRequestHandler(Thread):
             "DE-REGISTER": self.de_register,
             "PUBLISH": self.publish,
             "REMOVE": self.remove,
+            "UPDATE-CONTACT": self.updateContact,
         }
 
     def run(self):
@@ -95,3 +96,25 @@ class ServerRequestHandler(Thread):
             remove_denied = RemoveDenied(remove.rq, "Client " + remove.name + " is not registered")
             self.send_message_to_client(remove_denied)
             log(remove_denied)
+
+    def updateContact(self):
+        update_contact = UpdateContact(**self.data)
+        log(update_contact)
+        client_exist = False
+        for client in self.client_list:
+            if client.name == update_contact.name:
+                client_exist = True
+                client.set_modification(update_contact.ip_address, update_contact.udp_socket, update_contact.tcp_socket)
+
+
+        if client_exist:
+            update_confirmed = UpdateConfirmed(update_contact.rq, update_contact.name, update_contact.ip_address,
+                                               update_contact.udp_socket, update_contact.tcp_socket)
+
+            self.send_message_to_client(update_confirmed)
+            log(update_confirmed)
+        else:
+            update_denied = UpdateDenied(update_contact.rq, update_contact.name, "Client " + update_contact.name + " is not registered")
+            self.send_message_to_client(update_denied)
+            log(update_denied)
+
