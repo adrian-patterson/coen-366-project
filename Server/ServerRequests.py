@@ -53,6 +53,7 @@ class ServerRequestHandler(Thread):
 
     def de_register(self):
         de_register = DeRegister(**self.data)
+        # TODO de register by name; RQ is per request
         self.client_list = [client for client in self.client_list if client.rq != de_register.rq]
         self.client_database.de_register_client(de_register.rq)
         log(de_register)

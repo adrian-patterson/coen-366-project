@@ -9,8 +9,8 @@ BUFFER_SIZE = 1024
 
 
 class Client:
-    UDP_PORT = 8080
-    SERVER_ADDRESS = ("127.0.0.1", 8000)
+    UDP_PORT = 8000
+    SERVER_ADDRESS = ("127.0.0.1", 8090)
 
     def __init__(self):
         super().__init__()
@@ -23,6 +23,7 @@ class Client:
         self.udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.udp_socket.bind((self.ip_address, self.UDP_PORT))
         self.udp_socket.settimeout(3)
+        self.tcp_socket = None
         print("Client Live: " + str(self.udp_socket))
 
     def send_message_to_server(self, message):
@@ -37,6 +38,9 @@ class Client:
         for i in files:
             self.list_of_available_files.append(i)
         os.chdir(current_directory)
+
+    def increment_rq(self):
+        self.rq += 1
 
     def __del__(self):
         self.udp_socket.close()
@@ -207,22 +211,3 @@ class UpdateClientContact(Thread):
         log(update_denied)
         return update_denied.reason
 
-
-client = Client()
-list = ['Test.txt']
-client.name = "Joe"
-d = RegisterWithServer(client)
-d.start()
-d.join()
-#p = PublishFilesToServer(client, list)
-#p.start()
-#p.join()
-#r = RemoveFilesFromServer(client, list)
-#r.start()
-#r.join()
-new_ip = "192.169.101"
-new_udp_socket = 8000
-new_tcp_socket = "HELLO CHANGED"
-u = UpdateClientContact(client, new_ip, new_udp_socket, new_tcp_socket)
-u.start()
-u.join()

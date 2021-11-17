@@ -8,7 +8,7 @@ from ServerRequests import ServerRequestHandler
 
 class Server(Thread):
     HOST = "127.0.0.1"
-    UDP_PORT = 8000
+    UDP_PORT = 8090
     BUFFER_SIZE = 1024
 
     def __init__(self):
