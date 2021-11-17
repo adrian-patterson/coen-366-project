@@ -36,25 +36,23 @@ class ServerRequestHandler(Thread):
         log(register)
 
         client = ClientData(**register.__dict__)
-        client.rq = len(self.client_list)
 
         if any(client.name == c.name for c in self.client_list):
-            register_denied = RegisterDenied(client.rq, "Client with same name already registered!")
+            register_denied = RegisterDenied(register.rq, "Client with same name already registered!")
             log(register_denied)
             self.send_message_to_client(register_denied)
         else:
             self.client_list.append(client)
             self.client_database.register_client(client)
 
-            registered = Registered(client.rq)
+            registered = Registered(register.rq)
             self.send_message_to_client(registered)
             log(registered)
 
     def de_register(self):
         de_register = DeRegister(**self.data)
-        # TODO de register by name; RQ is per request
-        self.client_list = [client for client in self.client_list if client.rq != de_register.rq]
-        self.client_database.de_register_client(de_register.rq)
+        self.client_list = [client for client in self.client_list if client.name != de_register.name]
+        self.client_database.de_register_client(de_register.name)
         log(de_register)
 
     def publish(self):

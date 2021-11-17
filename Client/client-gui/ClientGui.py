@@ -1,6 +1,7 @@
 import requests
 from flask import Flask, render_template, Response, request
-from Client import Client, RegisterWithServer, DeRegisterFromServer, RemoveFilesFromServer
+from ClientRequests import RegisterWithServer, DeRegisterFromServer, RemoveFilesFromServer, PublishFilesToServer
+from Client import Client
 
 app = Flask("__main__", static_url_path='', static_folder='build', template_folder='build')
 client = Client()
@@ -33,8 +34,9 @@ def get_client_info():
 def register():
     register_request = request.get_json(force=True)
     name = register_request['name']
+    server_ip_address = register_request['serverIpAddress']
     client.name = name
-    registration = RegisterWithServer(client)
+    registration = RegisterWithServer(client, server_ip_address)
     registration.start()
     return {'register': registration.join()}
 
@@ -47,9 +49,21 @@ def de_register():
     return Response(status=201)
 
 
-@app.route("/remove_files", methods=["POST"])
+@app.route("/publish", methods=["POST"])
+def publish_files():
+    publish_request = request.get_json(force=True)
+    list_of_files_to_publish = publish_request["filesSelected"]
+    publish = PublishFilesToServer(client, list_of_files_to_publish)
+    publish.start()
+    publish.join()
+    return Response(status=201)
+
+
+@app.route("/remove", methods=["POST"])
 def remove_files():
-    remove = RemoveFilesFromServer(client)
+    remove_request = request.get_json(force=True)
+    list_of_files_to_remove = remove_request["filesSelected"]
+    remove = RemoveFilesFromServer(client, list_of_files_to_remove)
     remove.start()
     remove.join()
     return Response(status=201)
@@ -65,7 +79,7 @@ def shutdown():
 
 
 def start():
-    app.run(host='0.0.0.0', threaded=True, port=5002)
+    app.run(host='', threaded=True, port=5000, debug=True)
 
 
 def stop():

@@ -20,25 +20,41 @@ function PageBody(props: { classes: any }) {
   const [registerLoading, setRegisterLoading] = useState(false);
   const navigate = useNavigate();
   const [enteredName, setEnteredName] = useState("");
+  const [serverIpAddress, setServerIpAddress] = useState("");
   const { classes } = props;
 
   const onRegister = () => {
     setRegisterLoading(true);
-    fetch("/register", {
-      method: "POST",
-      body: JSON.stringify({ name: enteredName }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.register === true) {
-          navigate(`app`);
-        } else {
-          enqueueSnackbar(`Failed to register: ${data.register}`, {
-            variant: "error" as VariantType,
-          });
-          setRegisterLoading(false);
-        }
+
+    if (
+      !/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/gi.test(
+        serverIpAddress
+      )
+    ) {
+      enqueueSnackbar(`Failed to register: Invalid IP Address!`, {
+        variant: "error" as VariantType,
       });
+      setRegisterLoading(false);
+    } else {
+      fetch("/register", {
+        method: "POST",
+        body: JSON.stringify({
+          name: enteredName,
+          serverIpAddress: serverIpAddress,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.register === true) {
+            navigate(`app`);
+          } else {
+            enqueueSnackbar(`Failed to register: ${data.register}`, {
+              variant: "error" as VariantType,
+            });
+            setRegisterLoading(false);
+          }
+        });
+    }
   };
 
   return (
@@ -65,6 +81,24 @@ function PageBody(props: { classes: any }) {
               variant="standard"
               color="primary"
               onChange={(event) => setEnteredName(event.target.value)}
+            />
+          </div>
+          <div>
+            <TextField
+              style={{ width: 300 }}
+              InputProps={{
+                style: { color: "white", fontSize: "20px" },
+                className: classes.input,
+              }}
+              InputLabelProps={{
+                style: { color: "white", fontSize: "20px" },
+                className: classes.input,
+              }}
+              id="client-name"
+              label="Server IP Address"
+              variant="standard"
+              color="primary"
+              onChange={(event) => setServerIpAddress(event.target.value)}
             />
           </div>
           <div className="Register-button">
