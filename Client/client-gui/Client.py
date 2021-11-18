@@ -11,7 +11,7 @@ BUFFER_SIZE = 1024
 
 class Client:
     UDP_PORT = 8000
-    SERVER_ADDRESS = ("192.168.1.7", 8090)
+    SERVER_ADDRESS = ('192.168.169.2',8090)
 
     def __init__(self):
         super().__init__()
@@ -257,12 +257,12 @@ class SearchFileFromDataBase(Thread):
         self.file_name = file_name
         self.result = None
         self.response_messages = {
-            "SEARCH_FILE": self.search_file,
-            "SEARCH_ERROR": self.search_error
+            "SEARCH-FILE": self.search_file,
+            "SEARCH-ERROR": self.search_error
         }
 
     def run(self):
-        search_file_request = SearchFileRequest(self.client.rq)
+        search_file_request = SearchFileRequest(self.client.rq, self.file_name)
         self.client.send_message_to_server(search_file_request)
 
         try:
@@ -288,10 +288,19 @@ class SearchFileFromDataBase(Thread):
 
 
 client = Client()
-client.name = "Jin"
+client.name = "Jip"
 client.rq = 5
 
-register_thread = PublishFilesToServer(client, ["hello.txt", "hi.txt"])
+# client2 = Client()
+# client2.name = "Jin"
+# client2.rq = 5
+
+print(client.name)
+# register_thread = PublishFilesToServer(client,['hello2.txt', "hi.txt"])
+# register_thread = RegisterWithServer(client)
+# register_thread = RetrieveAllClientsFromServer(client)
+# register_thread = SearchFileFromDataBase(client, '  hello.txt')
+register_thread = RemoveFilesFromServer(client, ['hi.txt'])
 register_thread.start()
 register_thread.join()
 

@@ -96,7 +96,7 @@ class RetrieveError:
 class SearchFileRequest:
 
     def __init__(self, rq, file_name, **_):
-        self.TYPE = "SEARCH-FILE-REQUEST"
+        self.TYPE = "SEARCH-FILE"
         self.rq = rq
         self.file_name = file_name
 
@@ -111,7 +111,7 @@ class SearchFileRequest:
 class SearchFileResponse:
 
     def __init__(self, rq, list_of_clients, **_):
-        self.TYPE = "SEARCH-FILE-RESPONSE"
+        self.TYPE = "SEARCH-FILE"
         self.rq = rq
         self.list_of_clients = list_of_clients
 

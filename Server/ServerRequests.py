@@ -65,17 +65,28 @@ class ServerRequestHandler(Thread):
         publish = Publish(**self.data)
         log(publish)
         client_exist = False
+        updated_files_list = []
         for client in self.client_list:
-            if client.name == publish.name:
+            if  publish.name == client.name:
                 client_exist = True
+                print(client.name == publish.name)
                 for file in publish.list_of_files:
-                    if file not in client.list_of_available_files:
-                        client.list_of_available_files.append(file)
+                    file_name = file.strip()
+                    if file_name not in client.list_of_available_files:
+                        print("insied if condition of the publish")
+                        print(file_name)
+                        print(client.list_of_available_files)
+                        client.list_of_available_files.append(file_name)
+                print("inside the publish after updating available files")
+                print(client.list_of_available_files)
+                updated_files_list = client.list_of_available_files
+                if "" in updated_files_list:
+                    updated_files_list.remove("")
 
         if client_exist:
             published = Published(publish.rq)
             self.send_message_to_client(published)
-            self.client_database.publish_filse(client.name, client.list_of_available_files)
+            self.client_database.publish_filse(publish.name, updated_files_list)
             log(published)
         else:
             publish_denied = PublishDenied(publish.rq, "Client " + publish.name + " is not registered")
@@ -86,21 +97,31 @@ class ServerRequestHandler(Thread):
         remove = Remove(**self.data)
         log(remove)
         client_exist = False
+        print(type(remove.list_of_files_to_remove))
+        name_not_matched_list = []
+        updated_list_of_available_files = []
         for client in self.client_list:
             if client.name == remove.name:
                 client_exist = True
+                updated_list_of_available_files = client.list_of_available_files
                 for file in remove.list_of_files_to_remove:
-                    if file != remove.list_of_files_to_remove:
-                        client.list_of_available_files = [file]
-        if client_exist:
-            removed = Removed(remove.rq)
-            self.send_message_to_client(removed)
-            self.client_database.publish_filse(client.name, client.list_of_available_files)
-            log(removed)
-        else:
-            remove_denied = RemoveDenied(remove.rq, "Client " + remove.name + " is not registered")
+                    file_name = file.strip()
+                    if file_name in client.list_of_available_files:
+                        updated_list_of_available_files.remove(file_name)                        
+                    else:
+                        name_not_matched_list.append(file_name)
+                        break
+
+        if name_not_matched_list:
+            remove_denied = RemoveDenied(remove.rq, "One or many files name unmatched.")
             self.send_message_to_client(remove_denied)
             log(remove_denied)
+        elif client_exist:
+            removed = Removed(remove.rq)
+            self.send_message_to_client(removed)
+            self.client_database.publish_filse(remove.name, updated_list_of_available_files)
+            log(removed)
+
 
     def retrieve_all(self):
         retireve_all = RetrieveAll(**self.data)
@@ -117,7 +138,7 @@ class ServerRequestHandler(Thread):
             self.send_message_to_client(retrieve_all)
             log(retrieve_all)
         else:
-            retrieve_error = RetrieveError(retireve_all.rq, "Client " + " is not registered")
+            retrieve_error = RetrieveError(retireve_all.rq, "Something went wrong")
             self.send_message_to_client(retrieve_error)
             log(retrieve_error)
 
@@ -141,33 +162,31 @@ class ServerRequestHandler(Thread):
             self.send_message_to_client(retrieve_error)
             log(retrieve_error)
         else:
-            retrieve_error = RetrieveError(retrieve_info_request.rq, "Client " +
-            retrieve_info_request.name+ " is not registered")
+            retrieve_error = RetrieveError(retrieve_info_request.rq, "Something went wrong")
             self.send_message_to_client(retrieve_error)
             log(retrieve_error)
 
     def search_file(self):
         search_file_request = SearchFileRequest(**self.data)
         log(search_file_request)
-        file_owner_list = None
+        file_owner_list = []
         for client in self.client_list:
-            if (search_file_request.file_name not in client.list_of_available_files):
+            if (search_file_request.file_name.strip() not in client.list_of_available_files):
                 continue
             file_owner = {"name" :client.name, "ip_address" :client.ip_address, "tcp_socket" : client.tcp_socket}
             file_owner_list.append(file_owner)
 
-        if file_owner_list is not None:
+        if file_owner_list:
             search_file_response = SearchFileResponse(search_file_request.rq, file_owner_list)
             self.send_message_to_client(search_file_response)
             log(search_file_response)
-        elif file_owner_list is None:
-            search_error = SearchError(search_file_request.rq, "Client " +
-             " is not registered")
+        elif not file_owner_list:
+            search_error = SearchError(search_file_request.rq,
+            search_file_request.file_name+ " is not published")
             self.send_message_to_client(search_error)
             log(search_error)
         else:
-            search_error = SearchError(search_file_request.rq, "Client " +
-            search_file_request.file+ " is not published")
+            search_error = SearchError(search_file_request.rq, "Something went wrong")
             self.send_message_to_client(search_error)
             log(search_error)
 
