@@ -125,13 +125,11 @@ class PublishFilesToServer(Thread):
         return self.result
 
     def published(self):
-        # NOT SURE ABOUT THIS NEXT LINE
         published = Published(**bytes_to_object(self.server_response[0]))
         log(published)
         return True
 
     def publish_denied(self):
-        # NOT SURE ABOUT THIS NEXT LINE
         publish_denied = PublishDenied(**bytes_to_object(self.server_response[0]))
         log(publish_denied)
         return publish_denied.reason
