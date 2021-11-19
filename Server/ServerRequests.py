@@ -69,16 +69,10 @@ class ServerRequestHandler(Thread):
         for client in self.client_list:
             if  publish.name == client.name:
                 client_exist = True
-                print(client.name == publish.name)
                 for file in publish.list_of_files:
                     file_name = file.strip()
                     if file_name not in client.list_of_available_files:
-                        print("insied if condition of the publish")
-                        print(file_name)
-                        print(client.list_of_available_files)
                         client.list_of_available_files.append(file_name)
-                print("inside the publish after updating available files")
-                print(client.list_of_available_files)
                 updated_files_list = client.list_of_available_files
                 if "" in updated_files_list:
                     updated_files_list.remove("")
@@ -97,7 +91,6 @@ class ServerRequestHandler(Thread):
         remove = Remove(**self.data)
         log(remove)
         client_exist = False
-        print(type(remove.list_of_files_to_remove))
         name_not_matched_list = []
         updated_list_of_available_files = []
         for client in self.client_list:

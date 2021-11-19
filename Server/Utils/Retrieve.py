@@ -12,7 +12,7 @@ class RetrieveAll:
         """
 
 
-class Retrieve():
+class Retrieve:
 
     def __init__(self, rq, list_of_clients, **_):
         self.TYPE = "RETRIEVE"

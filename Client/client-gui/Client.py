@@ -35,9 +35,8 @@ class Client:
         path = 'ClientFiles'
         os.chdir(path)
         files = os.listdir()
-        for file in files:
-            if not self.list_of_available_files.__contains__(file):
-                self.list_of_available_files.append(file)
+        for i in files:
+            self.list_of_available_files.append(i)
         os.chdir(current_directory)
 
     def increment_rq(self):
@@ -100,7 +99,7 @@ class DeRegisterFromServer(Thread):
 
 class PublishFilesToServer(Thread):
 
-    def __init__(self, client, list_of_files_to_publish):
+    def __init__(self, client,list_of_files_to_publish):
         super().__init__()
         self.client = client
         self.server_response = None
@@ -139,7 +138,7 @@ class PublishFilesToServer(Thread):
 
 
 class RemoveFilesFromServer(Thread):
-    def __init__(self, client, list_of_files_to_remove):
+    def __init__(self, client,list_of_files_to_remove):
         super().__init__()
         self.client = client
         self.list_of_files_to_remove = list_of_files_to_remove
@@ -288,7 +287,7 @@ class SearchFileFromDataBase(Thread):
 
 
 client = Client()
-client.name = "Jip"
+client.name = "Jin"
 client.rq = 5
 
 # client2 = Client()
@@ -296,11 +295,11 @@ client.rq = 5
 # client2.rq = 5
 
 print(client.name)
-# register_thread = PublishFilesToServer(client,['hello2.txt', "hi.txt"])
+register_thread = PublishFilesToServer(client,['hello2.txt', "hi.txt"])
 # register_thread = RegisterWithServer(client)
 # register_thread = RetrieveAllClientsFromServer(client)
 # register_thread = SearchFileFromDataBase(client, '  hello.txt')
-register_thread = RemoveFilesFromServer(client, ['hi.txt'])
+# register_thread = RemoveFilesFromServer(client, ['hi.txt'])
 register_thread.start()
 register_thread.join()
 

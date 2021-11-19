@@ -15,9 +15,6 @@ class Database:
                     client = ClientData(row[1], row[2], row[3], row[4])
                     client.rq = row[0]
                     client.list_of_available_files = self.str_to_list(row[5])
-                    print(row[5])                         
-                    print("inside the open database")
-                    print(type(client.list_of_available_files))
                     for file_name in client.list_of_available_files:
                         print(file_name)
                     client_list.append(client)
@@ -27,8 +24,6 @@ class Database:
     def register_client(self, client):
         with open(self.DATABASE_PATH, mode="a", newline="") as database:
             csv_writer = csv.writer(database)
-            print("inside the register client")
-            print(type(client.to_csv_row()[5]))
             csv_writer.writerow(client.to_csv_row())
 
     def de_register_client(self, name):
@@ -50,11 +45,8 @@ class Database:
                     clientUpdate.rq = row[0]
                     clientUpdate.list_of_available_files = files
                     clients.append(clientUpdate.to_csv_row())
-                    print("The name of the client is: " + row[1])
                 else:
                     clients.append(row)
-            print("inside publish files")
-            print(clients)
 
         with open(self.DATABASE_PATH, mode="w", newline="") as database:
             csv_writer = csv.writer(database)
