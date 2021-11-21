@@ -8,7 +8,8 @@ from Utils.UtilityFunctions import get_ip_address
 
 
 class Server(Thread):
-    UDP_PORT = 8080
+    
+    UDP_PORT = 5001
     BUFFER_SIZE = 1024
 
     def __init__(self):

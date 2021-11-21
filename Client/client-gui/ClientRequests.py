@@ -4,6 +4,8 @@ from Client import Client
 from Utils.FileTransfer import Download, File, FileEnd, DownloadError
 from Utils.Publishing import Publish, Published, PublishDenied, Remove, Removed, RemoveDenied
 from Utils.Registration import Register, Registered, RegisterDenied, DeRegister
+from Utils.Retrieve import Retrieve, RetrieveAll, RetrieveError, RetrieveInfoRequest, RetrieveInfoResponse, SearchError, SearchFileRequest, SearchFileResponse
+from Utils.UpdateInformation import UpdateConfirmed, UpdateContact, UpdateDenied
 from Utils.UtilityFunctions import bytes_to_object, log, get_message_type
 
 BUFFER_SIZE = 1024
@@ -23,9 +25,10 @@ class RegisterWithServer(Thread):
         }
 
     def run(self):
-        register = Register(self.client.rq, self.client.name, self.client.ip_address,
+        register = Register(self.client.rq, 
+                            self.client.name, self.client.ip_address,
                             self.client.udp_socket.getsockname()[1],
-                            "TCP SOCKET")
+                            self.client.tcp_socket.getsockname()[1])
         self.client.send_message_to_server(register)
 
         try:
@@ -139,6 +142,147 @@ class RemoveFilesFromServer(Thread):
         return remove_denied.reason
 
 
+class RetrieveAllClientsFromServer(Thread):
+
+    def __init__(self, client):
+        super().__init__()
+        self.client = client
+        self.server_response = None
+        self.result = None
+        self.response_messages = {
+            "RETRIEVE": self.retrieve,
+            "RETRIEVE_ERROR": self.retrieve_error
+        }
+
+    def run(self):
+        retrieve_all = RetrieveAll(self.client.rq)
+        self.client.send_message_to_server(retrieve_all)
+
+        try:
+            self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
+            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+        except socket.error:
+            self.result = "Connection Timed Out"
+
+    def join(self, *args, **kwargs):
+        super().join()
+        return self.result
+
+    def retrieve(self):
+        retrieve = Retrieve(**bytes_to_object(self.server_response[0]))
+        log(retrieve)
+        return True
+
+    def retrieve_error(self):
+        retrieve_error = RetrieveError(**bytes_to_object(self.server_response[0]))
+        log(retrieve_error)
+        return retrieve_error.reason
+
+
+class RetrieveClientInfoFromServer(Thread):
+
+    def __init__(self, client, name):
+        super().__init__()
+        self.client = client
+        self.server_response = None
+        self.name = name
+        self.result = None
+        self.response_messages = {
+            "RETRIEVE-INFOT": self.retrieve_infot,
+            "RETRIEVE-ERROR": self.retrieve_error
+        }
+
+    def run(self):
+        retrieve_info_request = RetrieveInfoRequest(self.client.rq, self.name)
+        self.client.send_message_to_server(retrieve_info_request)
+
+        try:
+            self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
+            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+        except socket.error:
+            self.result = "Connection Timed Out"
+
+    def join(self, *args, **kwargs):
+        super().join()
+        return self.result
+
+    def retrieve_infot(self):
+        retrieve_info_response = RetrieveInfoResponse(**bytes_to_object(self.server_response[0]))
+        log(retrieve_info_response)
+        return True
+
+    def retrieve_error(self):
+        retrieve_error = RetrieveError(**bytes_to_object(self.server_response[0]))
+        log(retrieve_error)
+        return retrieve_error.reason
+
+
+class SearchFileFromDataBase(Thread):
+
+    def __init__(self, client, file_name):
+        super().__init__()
+        self.client = client
+        self.server_response = None
+        self.file_name = file_name
+        self.result = None
+        self.response_messages = {
+            "SEARCH-FILE": self.search_file,
+            "SEARCH-ERROR": self.search_error
+        }
+
+    def run(self):
+        search_file_request = SearchFileRequest(self.client.rq, self.file_name)
+        self.client.send_message_to_server(search_file_request)
+
+    def search_file(self):
+        search_file_response = SearchFileResponse(**bytes_to_object(self.server_response[0]))
+        log(search_file_response)
+        return True
+
+    def search_error(self):
+        search_error = SearchError(**bytes_to_object(self.server_response[0]))
+        log(search_error)
+        return search_error.reason
+
+
+class UpdateClientContact(Thread):
+
+    def __init__(self, client, new_ip, new_udp_socket, new_tcp_socket):
+        super().__init__()
+        self.client = client
+        self.new_ip = new_ip
+        self.new_udp_socket = new_udp_socket
+        self.new_tcp_socket = new_tcp_socket
+        self.server_response = None
+        self.result = None
+        self.response_messages = {
+            "UPDATE-CONFIRMED": self.update_confirmed,
+            "UPDATE-DENIED": self.update_denied
+        }
+
+    def run(self):
+        update_contact = UpdateContact(self.client.rq, self.client.name, self.new_ip, self.new_udp_socket, self.new_tcp_socket)
+        self.client.send_message_to_server(update_contact)
+        try:
+            self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
+            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+        except socket.error:
+            self.result = "Connection Timed Out"
+
+    def join(self, *args, **kwargs):
+        super().join()
+        return self.result
+
+    def update_confirmed(self):
+        update_confirmed = UpdateConfirmed(**bytes_to_object(self.server_response[0]))
+        log(update_confirmed)
+        return True
+
+    def update_denied(self):
+        update_denied = UpdateDenied(**bytes_to_object(self.server_response[0]))
+        log(update_denied)
+        return update_denied.reason
+
 class DownloadFileFromPeer(Thread):
 
     def __init__(self, client, file_name, peer_ip_address, peer_tcp_socket):
@@ -202,6 +346,4 @@ class DownloadFileFromPeer(Thread):
         return True
 
 
-c = Client()
-d = DownloadFileFromPeer(c, "Test2.txt", "10.0.0.12", 5002)
-d.start()
+
