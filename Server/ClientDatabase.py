@@ -1,6 +1,7 @@
+import json
 from ClientData import ClientData
 import os
-import csv
+import asyncio
 
 
 class Database:
@@ -10,47 +11,49 @@ class Database:
         client_list = []
         if os.path.exists(self.DATABASE_PATH):
             with open(self.DATABASE_PATH, mode="r") as database:
-                csv_reader = csv.reader(database)
-                for row in csv_reader:
-                    client = ClientData(row[1], row[2], row[3], row[4])
-                    client.rq = row[0]
-                    client.list_of_available_files = self.str_to_list(row[5])
-                    for file_name in client.list_of_available_files:
-                        print(file_name)
+                for client_json in database.readlines():
+                    client = ClientData(**json.loads(client_json))
                     client_list.append(client)
 
         return client_list
 
-    def register_client(self, client):
+    def add_client(self, client):
         with open(self.DATABASE_PATH, mode="a", newline="") as database:
-            csv_writer = csv.writer(database)
-            csv_writer.writerow(client.to_csv_row())
+            database.write(json.dumps(client.__dict__) + "\n")
 
-    def de_register_client(self, name):
+    def remove_client(self, name):
+        clients = []
+        new_clients_list = []
+
         with open(self.DATABASE_PATH, mode="r") as database:
-            csv_reader = csv.reader(database)
-            clients = [row for row in csv_reader if row[0] != name]
+            clients = (client.rstrip() for client in database)
+            clients = (client for client in clients if client)
+            new_clients_list = [client for client in clients if json.loads(client)["name"] != name]
 
         with open(self.DATABASE_PATH, mode="w", newline="") as database:
-            csv_writer = csv.writer(database)
-            csv_writer.writerows(clients)
+            for client in new_clients_list:
+                database.write(client + "\n")
 
     def publish_files(self, name, files):
         clients = []
+        new_clients_list = []
+
         with open(self.DATABASE_PATH, mode="r") as database:
-            csv_reader = csv.reader(database)
-            for row in csv_reader:
-                if row[1] == name:
-                    clientUpdate = ClientData(row[1],row[2],row[3],row[4])
-                    clientUpdate.rq = row[0]
-                    clientUpdate.list_of_available_files = files
-                    clients.append(clientUpdate.to_csv_row())
-                else:
-                    clients.append(row)
+            clients = (client.rstrip() for client in database)
+            clients = (client for client in clients if client)
+
+            for client_json in clients:
+                if client_json:
+                    client = json.loads(client_json)
+                    if client["name"] == name:
+                        client["list_of_available_files"] = files
+                        new_clients_list.append(json.dumps(client))
+                    else:
+                        new_clients_list.append(client_json)
 
         with open(self.DATABASE_PATH, mode="w", newline="") as database:
-            csv_writer = csv.writer(database)
-            csv_writer.writerows(clients)
+            for client in new_clients_list:
+                database.write(client + "\n")
 
     def delete_database(self):
         if os.path.exists(self.DATABASE_PATH):

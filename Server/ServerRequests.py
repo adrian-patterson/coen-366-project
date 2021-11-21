@@ -47,7 +47,7 @@ class ServerRequestHandler(Thread):
             self.send_message_to_client(register_denied)
         else:
             self.client_list.append(client)
-            self.client_database.register_client(client)
+            self.client_database.add_client(client)
 
             registered = Registered(register.rq)
             self.send_message_to_client(registered)
@@ -56,27 +56,25 @@ class ServerRequestHandler(Thread):
     def de_register(self):
         de_register = DeRegister(**self.data)
         self.client_list = [client for client in self.client_list if client.name != de_register.name]
-        self.client_database.de_register_client(de_register.name)
+        self.client_database.remove_client(de_register.name)
         log(de_register)
 
     def publish(self):
         publish = Publish(**self.data)
-        client_exist = False
+        client_exists = False
         updated_files_list = []
         log(publish)
         
         for client in self.client_list:
             if  publish.name == client.name:
-                client_exist = True
+                client_exists = True
                 for file in publish.list_of_files:
-                    file_name = file.strip()
-                    if file_name not in client.list_of_available_files:
-                        client.list_of_available_files.append(file_name)
-                updated_files_list = client.list_of_available_files
-                if "" in updated_files_list:
-                    updated_files_list.remove("")
+                    if file not in client.list_of_available_files:
+                        client.list_of_available_files.append(file)
 
-        if client_exist:
+                updated_files_list = client.list_of_available_files
+
+        if client_exists:
             published = Published(publish.rq)
             self.send_message_to_client(published)
             self.client_database.publish_files(publish.name, updated_files_list)

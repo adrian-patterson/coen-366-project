@@ -1,11 +1,7 @@
 import os
 from threading import Thread
 from Utils.FileTransfer import File, DownloadError, Download, FileEnd
-from Utils.Registration import Register
 from Utils.UtilityFunctions import *
-from Utils.Publishing import Publish, Published, PublishDenied, Remove, RemoveDenied, Removed
-from Utils.Retrieve import RetrieveAll, Retrieve, RetrieveError, RetrieveInfoRequest, RetrieveInfoResponse, SearchError, SearchFileRequest, SearchFileResponse
-from Utils.UpdateInformation import UpdateDenied, UpdateConfirmed, UpdateContact
 
 BUFFER_SIZE = 1024
 
