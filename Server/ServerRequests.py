@@ -1,12 +1,11 @@
 from threading import Thread
 from ClientDatabase import Database
 from ClientData import ClientData
-from Utils.FileTransfer import Download, DownloadError
 from Utils.Registration import Register, Registered, RegisterDenied, DeRegister
 from Utils.UtilityFunctions import *
 from Utils.Publishing import Publish, Published, PublishDenied, Remove, RemoveDenied, Removed
 from Utils.Retrieve import RetrieveAll, Retrieve, RetrieveError, RetrieveInfoRequest, RetrieveInfoResponse, SearchError, SearchFileRequest, SearchFileResponse
-
+from Utils.UpdateInformation import UpdateDenied, UpdateConfirmed, UpdateContact
 
 class ServerRequestHandler(Thread):
 
@@ -25,7 +24,8 @@ class ServerRequestHandler(Thread):
             "REMOVE": self.remove,
             "RETRIEVE-ALL": self.retrieve_all,
             "RETRIEVE-INFOT": self.retrieve_infot,
-            "SEARCH-FILE": self.search_file
+            "SEARCH-FILE": self.search_file,
+            "UPDATE-CONTACT": self.updateContact
         }
 
     def run(self):
@@ -63,9 +63,10 @@ class ServerRequestHandler(Thread):
 
     def publish(self):
         publish = Publish(**self.data)
-        log(publish)
         client_exist = False
         updated_files_list = []
+        log(publish)
+        
         for client in self.client_list:
             if  publish.name == client.name:
                 client_exist = True
@@ -80,7 +81,7 @@ class ServerRequestHandler(Thread):
         if client_exist:
             published = Published(publish.rq)
             self.send_message_to_client(published)
-            self.client_database.publish_filse(publish.name, updated_files_list)
+            self.client_database.publish_files(publish.name, updated_files_list)
             log(published)
         else:
             publish_denied = PublishDenied(publish.rq, "Client " + publish.name + " is not registered")
@@ -112,7 +113,7 @@ class ServerRequestHandler(Thread):
         elif client_exist:
             removed = Removed(remove.rq)
             self.send_message_to_client(removed)
-            self.client_database.publish_filse(remove.name, updated_list_of_available_files)
+            self.client_database.publish_files(remove.name, updated_list_of_available_files)
             log(removed)
 
 
@@ -183,4 +184,24 @@ class ServerRequestHandler(Thread):
             self.send_message_to_client(search_error)
             log(search_error)
 
-    
+    def updateContact(self):
+        update_contact = UpdateContact(**self.data)
+        log(update_contact)
+        client_exist = False
+        for client in self.client_list:
+            if client.name == update_contact.name:
+                client_exist = True
+                client.set_modification(update_contact.ip_address, update_contact.udp_socket, update_contact.tcp_socket)
+
+
+        if client_exist:
+            update_confirmed = UpdateConfirmed(update_contact.rq, update_contact.name, update_contact.ip_address,
+                                               update_contact.udp_socket, update_contact.tcp_socket)
+
+            self.send_message_to_client(update_confirmed)
+            log(update_confirmed)
+        else:
+            update_denied = UpdateDenied(update_contact.rq, update_contact.name, "Client " + update_contact.name + " is not registered")
+            self.send_message_to_client(update_denied)
+            log(update_denied)
+
