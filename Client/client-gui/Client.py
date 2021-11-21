@@ -1,7 +1,11 @@
 import os
 from threading import Thread
 from Utils.FileTransfer import File, DownloadError, Download, FileEnd
+from Utils.Registration import Register
 from Utils.UtilityFunctions import *
+from Utils.Publishing import Publish, Published, PublishDenied, Remove, RemoveDenied, Removed
+from Utils.Retrieve import RetrieveAll, Retrieve, RetrieveError, RetrieveInfoRequest, RetrieveInfoResponse, SearchError, SearchFileRequest, SearchFileResponse
+from Utils.UpdateInformation import UpdateDenied, UpdateConfirmed, UpdateContact
 
 BUFFER_SIZE = 1024
 
@@ -77,9 +81,8 @@ class Client(Thread):
         path = 'ClientFiles'
         os.chdir(path)
         files = os.listdir()
-        for file in files:
-            if not self.list_of_available_files.__contains__(file):
-                self.list_of_available_files.append(file)
+        for i in files:
+            self.list_of_available_files.append(i)
         os.chdir(current_directory)
 
     def send_file_to_peer(self, download_request):
@@ -110,7 +113,7 @@ class Client(Thread):
                         chunk_number += 1
 
                     chunk_text += character
-
+        
     def increment_rq(self):
         self.rq += 1
 
@@ -118,5 +121,96 @@ class Client(Thread):
         self.udp_socket.close()
 
 
-# c = Client()
-# c.start()
+class RegisterWithServer(Thread):
+
+    def __init__(self, client):
+        super().__init__()
+        self.client = client
+        self.server_response = None
+        self.result = None
+        self.response_messages = {
+            "REGISTERED": self.registered,
+            "REGISTER-DENIED": self.register_denied
+        }
+
+    def run(self):
+        register = Register(self.client.rq, self.client.name, self.client.ip_address, self.client.udp_socket.getsockname()[1],
+                            "TCP SOCKET")
+        self.client.send_message_to_server(register)
+
+        try:
+            self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
+            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+        except socket.error:
+            self.result = "Connection to Server timed out."
+
+    def join(self, *args, **kwargs):
+        super().join()
+        return self.result
+
+
+    def increment_rq(self):
+        self.rq += 1
+
+    def __del__(self):
+        self.udp_socket.close()
+
+    def run(self):
+        publish = Publish(self.client.rq, self.client.name, self.list_of_files_to_publish)
+        self.client.send_message_to_server(publish)
+
+        try:
+            self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
+            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+        except socket.error:
+            self.result = "Connection Timed Out"
+
+    def join(self, *args, **kwargs):
+        super().join()
+        return self.result
+
+    def published(self):
+        published = Published(**bytes_to_object(self.server_response[0]))
+        log(published)
+        return True
+
+    def publish_denied(self):
+        publish_denied = PublishDenied(**bytes_to_object(self.server_response[0]))
+        log(publish_denied)
+        return publish_denied.reason
+
+
+class RemoveFilesFromServer(Thread):
+    def __init__(self, client, list_of_files_to_remove):
+        super().__init__()
+        self.client = client
+        self.list_of_files_to_remove = list_of_files_to_remove
+        self.server_response = None
+        self.result = None
+        self.response_messages = {
+            "REMOVED": self.removed,
+            "REMOVE-DENIED": self.remove_denied
+        }
+
+    def run(self):
+        remove = Remove(self.client.rq, self.client.name, self.list_of_files_to_remove)
+        self.client.send_message_to_server(remove)
+        try:
+            self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
+            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+        except socket.error:
+            self.result = "Connection Timed Out"
+
+    def join(self, *args, **kwargs):
+        super().join()
+        return self.result
+
+    def removed(self):
+        removed = Removed(**bytes_to_object(self.server_response[0]))
+        log(removed)
+        return True
+
+    def remove_denied(self):
+        remove_denied = RemoveDenied(**bytes_to_object(self.server_response[0]))
+        log(remove_denied)
+        return remove_denied.reason

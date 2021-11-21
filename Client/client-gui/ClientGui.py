@@ -12,14 +12,8 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/app")
-def get_app():
-    return render_template("index.html")
-
-
 @app.route("/client", methods=["GET"])
 def get_client_info():
-    client.get_list_of_available_files()
     return {
         'rq': client.rq,
         'name': client.name,
