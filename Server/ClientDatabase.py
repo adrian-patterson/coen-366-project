@@ -35,7 +35,7 @@ class Database:
             csv_writer = csv.writer(database)
             csv_writer.writerows(clients)
 
-    def publish_filse(self, name, files):
+    def publish_files(self, name, files):
         clients = []
         with open(self.DATABASE_PATH, mode="r") as database:
             csv_reader = csv.reader(database)
