@@ -42,7 +42,6 @@ const styles = {
 };
 
 export type Client = {
-  rq: number;
   name: string;
   ipAddress: string;
   udpSocket: string;
@@ -58,7 +57,7 @@ function PageBody(props: { classes: any }) {
   const [clientUdpSocket, setClientUdpSocket] = useState("");
   const [clientTcpSocket, setClientTcpSocket] = useState("");
   const [filesSelected, setFilesSelected] = useState<number[]>([]);
-  const [clientsExpanded, setClientsExpanded] = useState<number[]>([]);
+  const [clientsExpanded, setClientsExpanded] = useState<string[]>([]);
   const [clientsDiscovered, setClientsDiscovered] = useState<Client[]>([]);
   const [filesDiscovered, setFilesDiscovered] = useState<string[]>([]);
   const [searchedClient, setSearchedClient] = useState("");
@@ -75,9 +74,6 @@ function PageBody(props: { classes: any }) {
         return response.json();
       })
       .then((client: Client) => {
-        console.log(
-          `CLIENT: ${client.name} ${client.ipAddress} ${client.listOfAvailableFiles} ${client.tcpSocket} ${client.udpSocket}`
-        );
         setClient(client);
         setClientFiles(client.listOfAvailableFiles);
       });
@@ -86,7 +82,6 @@ function PageBody(props: { classes: any }) {
       name: "Me",
       ipAddress: "4352345",
       listOfAvailableFiles: ["MYYY FILE 1", "MY FILE @", "ETC BB"],
-      rq: 9000,
       udpSocket: "324234",
       tcpSocket: "324234",
     };
@@ -123,7 +118,6 @@ function PageBody(props: { classes: any }) {
     console.log("Search all clients clicked");
     const clients: Client[] = [
       {
-        rq: 0,
         name: "Adrian",
         ipAddress: "127.0.0.1",
         udpSocket: "8080",
@@ -131,7 +125,6 @@ function PageBody(props: { classes: any }) {
         listOfAvailableFiles: ["Legend of Zelda", "Thingy"],
       },
       {
-        rq: 1,
         name: "Ya boi",
         ipAddress: "127.0.0.1",
         udpSocket: "8080",
@@ -178,12 +171,12 @@ function PageBody(props: { classes: any }) {
     setFilesSelected(newChecked);
   };
 
-  const handleExpandClient = (value: number) => {
-    const currentIndex = clientsExpanded.indexOf(value);
+  const handleExpandClient = (clientName: string) => {
+    const currentIndex = clientsExpanded.indexOf(clientName);
     const newExpanded = [...clientsExpanded];
 
     if (currentIndex === -1) {
-      newExpanded.push(value);
+      newExpanded.push(clientName);
     } else {
       newExpanded.splice(currentIndex, 1);
     }
@@ -241,7 +234,9 @@ function PageBody(props: { classes: any }) {
                       display="flex"
                       justifyContent="flex-start"
                     >
-                      <p className="Grid-titles">IP Address: {}</p>
+                      <p className="Grid-titles">
+                        <b>IP Address:</b> {client?.ipAddress}
+                      </p>
                     </Grid>
                     <Grid
                       item
@@ -282,7 +277,9 @@ function PageBody(props: { classes: any }) {
                       display="flex"
                       justifyContent="flex-start"
                     >
-                      <p className="Grid-titles">UDP Socket: {}</p>
+                      <p className="Grid-titles">
+                        <b>UDP Socket:</b> {client?.udpSocket}
+                      </p>
                     </Grid>
                     <Grid
                       item
@@ -323,7 +320,9 @@ function PageBody(props: { classes: any }) {
                         display="flex"
                         justifyContent="flex-start"
                       >
-                        <p className="Grid-titles">TCP Socket: {}</p>
+                        <p className="Grid-titles">
+                          <b>TCP Socket:</b> {client?.tcpSocket}
+                        </p>
                       </Grid>
                       <Grid
                         item
@@ -530,20 +529,20 @@ function PageBody(props: { classes: any }) {
                     return (
                       <Box>
                         <ListItemButton
-                          onClick={() => handleExpandClient(client.rq)}
+                          onClick={() => handleExpandClient(client.name)}
                         >
                           <ListItemIcon>
                             <PersonIcon style={{ color: "white" }} />
                           </ListItemIcon>
                           <ListItemText primary={client.name} />
-                          {clientsExpanded.indexOf(client.rq) !== -1 ? (
+                          {clientsExpanded.indexOf(client.name) !== -1 ? (
                             <ExpandLess />
                           ) : (
                             <ExpandMore />
                           )}
                         </ListItemButton>
                         <Collapse
-                          in={clientsExpanded.indexOf(client.rq) !== -1}
+                          in={clientsExpanded.indexOf(client.name) !== -1}
                           timeout="auto"
                           unmountOnExit
                         >
