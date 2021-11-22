@@ -1,10 +1,12 @@
 import os
 import socket
+from Utils.Retrieve import Retrieve, RetrieveAll, RetrieveInfoRequest, RetrieveInfoResponse, RetrieveError, SearchFileRequest, SearchFileResponse, SearchError
 from threading import Thread
 from Utils.Registration import Register, Registered, RegisterDenied, DeRegister
 from Utils.UtilityFunctions import *
 from Utils.Publishing import Publish, Published, PublishDenied, Remove, RemoveDenied, Removed
 from Utils.UpdateInformation import UpdateDenied, UpdateConfirmed, UpdateContact
+
 BUFFER_SIZE = 1024
 
 
@@ -185,7 +187,8 @@ class UpdateClientContact(Thread):
         }
 
     def run(self):
-        update_contact = UpdateContact(self.client.rq, self.client.name, self.new_ip, self.new_udp_socket, self.new_tcp_socket)
+        update_contact = UpdateContact(self.client.rq, self.client.name, self.new_ip, self.new_udp_socket,
+                                       self.new_tcp_socket)
         self.client.send_message_to_server(update_contact)
         try:
             self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
@@ -208,21 +211,131 @@ class UpdateClientContact(Thread):
         return update_denied.reason
 
 
+class RetrieveAllFromServer(Thread):
+    def __init__(self, client ):
+        super().__init__()
+        self.client = client
+        self.server_response = None
+        self.result = None
+        self.response_messages = {
+            "RETRIEVE": self.retrieve,
+            "RETRIEVE-ERROR": self.retrieve_error
+        }
+
+    def run(self):
+        retrieveAll = RetrieveAll(self.client.rq)
+        self.client.send_message_to_server(retrieveAll)
+        try:
+            self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
+            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+        except socket.error:
+            self.result = "Connection Timed Out"
+
+    def join(self, *args, **kwargs):
+        super().join()
+        return self.result
+
+    def retrieve(self):
+        retrieve = Retrieve(**bytes_to_object(self.server_response[0]))
+        log(retrieve)
+        return True
+
+    def retrieve_error(self):
+        retrieveError = RetrieveError(**bytes_to_object(self.server_response[0]))
+        log(retrieveError)
+        return retrieveError.reason
+
+
+class RetrievePeerInfoFromServer(Thread):
+    def __init__(self, client, peer_name):
+        super().__init__()
+        self.client = client
+        self.peer_name = peer_name
+        self.server_response = None
+        self.result = None
+        self.response_messages = {
+            "RETRIEVE-INFO-RESPONSE": self.retrieve_info_response,
+            "RETRIEVE-ERROR": self.retrieve_error
+        }
+
+    def run(self):
+        retrieveInfoRequest = RetrieveInfoRequest(self.client.rq, self.peer_name)
+        self.client.send_message_to_server(retrieveInfoRequest)
+        try:
+            self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
+            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+        except socket.error:
+            self.result = "Connection Timed Out"
+
+    def join(self, *args, **kwargs):
+        super().join()
+        return self.result
+
+    def retrieve_info_response(self):
+        retrieveInfoResponse = RetrieveInfoResponse(**bytes_to_object(self.server_response[0]))
+        log(retrieveInfoResponse)
+        return retrieveInfoResponse.list_of_available_files
+
+    def retrieve_error(self):
+        retrieveError = RetrieveError(**bytes_to_object(self.server_response[0]))
+        log(retrieveError)
+        return retrieveError.reason
+
+
+class SearchFileFromServer(Thread):
+    def __init__(self, client, fileName):
+        super().__init__()
+        self.client = client
+        self.fileName = fileName
+        self.server_response = None
+        self.result = None
+        self.response_messages = {
+            "SEARCH-FILE-RESPONSE": self.search_file,
+            "SEARCH-ERROR": self.search_error
+        }
+
+    def run(self):
+        searchFileRequest = SearchFileRequest(self.client.rq)
+        self.client.send_message_to_server(searchFileRequest)
+        try:
+            self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
+            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+        except socket.error:
+            self.result = "Connection Timed Out"
+
+    def join(self, *args, **kwargs):
+        super().join()
+        return self.result
+
+    def search_files(self):
+        searchFile = SearchFileResponse(**bytes_to_object(self.server_response[0]))
+        log(searchFile)
+        return search_file.list_of_clients
+
+    def search_error(self):
+        searchError = SearchError(**bytes_to_object(self.server_response[0]))
+        log(searchError)
+        return searchError.reason
+
+
 client = Client()
 list = ['Test.txt']
 client.name = "Joe"
 d = RegisterWithServer(client)
 d.start()
 d.join()
+r = RetrieveAllFromServer(client)
+r.start()
+r.join()
 #p = PublishFilesToServer(client, list)
 #p.start()
 #p.join()
-#r = RemoveFilesFromServer(client, list)
-#r.start()
-#r.join()
-new_ip = "192.169.101"
-new_udp_socket = 8000
-new_tcp_socket = "HELLO CHANGED"
-u = UpdateClientContact(client, new_ip, new_udp_socket, new_tcp_socket)
-u.start()
-u.join()
+# r = RemoveFilesFromServer(client, list)
+# r.start()
+# r.join()
+#new_ip = "192.169.101"
+#new_udp_socket = 8000
+#new_tcp_socket = "HELLO CHANGED"
+#u = UpdateClientContact(client, new_ip, new_udp_socket, new_tcp_socket)
+#u.start()
+#u.join()

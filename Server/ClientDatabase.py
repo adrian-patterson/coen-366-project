@@ -24,10 +24,10 @@ class Database:
             csv_writer = csv.writer(database)
             csv_writer.writerow(client.to_csv_row())
 
-    def de_register_client(self, rq):
+    def de_register_client(self, name):
         with open(self.DATABASE_PATH, mode="r") as database:
             csv_reader = csv.reader(database)
-            clients = [row for row in csv_reader if row[0] != str(rq)]
+            clients = [row for row in csv_reader if row[1] != str(name)]
 
         with open(self.DATABASE_PATH, mode="w") as database:
             csv_writer = csv.writer(database)
@@ -36,3 +36,20 @@ class Database:
     def delete_database(self):
         if os.path.exists(self.DATABASE_PATH):
             os.remove(self.DATABASE_PATH)
+
+    def update_client(self, name, ip, udp_socket, tcp_socket):
+        with open(self.DATABASE_PATH, mode="r") as database:
+            csv_reader = csv.reader(database)
+            for row in csv_reader:
+                if row[1] == str(name):
+                    row[2] = ip
+                    row[3] = udp_socket
+                    row[4] = tcp_socket
+    def update_client(self, name, ip, udp_socket, tcp_socket):
+        with open(self.DATABASE_PATH, mode="r") as database:
+            csv_reader = csv.reader(database)
+            for row in csv_reader:
+                if row[1] == str(name):
+                    row[2] = ip
+                    row[3] = udp_socket
+                    row[4] = tcp_socket

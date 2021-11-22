@@ -12,18 +12,32 @@ class RetrieveAll:
 
 
 class Retrieve:
-
     def __init__(self, rq, list_of_clients, **_):
         self.TYPE = "RETRIEVE"
         self.rq = rq
         self.list_of_clients = list_of_clients
 
-    def __str__(self):
-        return f"""
-    {self.TYPE}
-        RQ:\t{self.rq}
-        LIST OF CLIENTS:\t{self.list_of_clients}
+    def str(self):
+        return f"""     
+    {self.TYPE}         
+    RQ:\t{self.rq}         
+    LIST OF CLIENTS:\t{self.format_client_list()}         
+    """
+
+    def print_client_info(self, name, ip_address, tcp_socket, list_of_available_files):
+        return f"""         
+        CLIENT INFO             
+        NAME:\t{name}             
+        IP:\t{ip_address}             
+        TCP:\t{tcp_socket}             
+        LIST OF AVAILABLE FILES:\t{list_of_available_files}             
         """
+
+    def format_client_list(self):
+        prettyStr = "\n"
+        for client_info in self.list_of_clients:
+            prettyStr += self.print_client_info(**client_info) + "\n"
+            return prettyStr
 
 
 class RetrieveInfoRequest:
@@ -99,12 +113,26 @@ class SearchFileResponse:
         self.rq = rq
         self.list_of_clients = list_of_clients
 
-    def __str__(self):
+    def str(self):
         return f"""
     {self.TYPE}
         RQ:\t{self.rq}
-        LIST OF CLIENTS:\t{self.list_of_clients}
+        LIST OF CLIENTS:\t{self.format_client_list()}
         """
+
+    def print_client_info(self, name, ip_address, tcp_socket):
+        return f"""
+        CLIENT INFO
+            NAME:\t{name}
+            IP:\t{ip_address}
+            TCP:\t{tcp_socket}
+            """
+
+    def format_client_list(self):
+        prettyStr = "\n"
+        for client_info in self.list_of_clients:
+            prettyStr += self.print_client_info(**client_info) + "\n"
+        return prettyStr
 
 
 class SearchError:
