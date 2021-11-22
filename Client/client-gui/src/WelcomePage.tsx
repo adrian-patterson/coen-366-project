@@ -8,6 +8,7 @@ import { SnackbarProvider, useSnackbar, VariantType } from "notistack";
 import { useNavigate } from "react-router";
 import TextField from "@mui/material/TextField";
 import { withStyles } from "@material-ui/core/styles";
+import PersonIcon from "@mui/icons-material/Person";
 
 const styles = {
   input: {
@@ -18,8 +19,10 @@ const styles = {
 function PageBody(props: { classes: any }) {
   const { enqueueSnackbar } = useSnackbar();
   const [registerLoading, setRegisterLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
   const navigate = useNavigate();
   const [enteredName, setEnteredName] = useState("");
+  const [registeredClientName, setRegisteredClientName] = useState("");
   const [serverIpAddress, setServerIpAddress] = useState("");
   const { classes } = props;
 
@@ -57,14 +60,25 @@ function PageBody(props: { classes: any }) {
     }
   };
 
+  const onLogin = () => {
+    setLoginLoading(true);
+    console.log(registeredClientName);
+    // search client on server
+    // if client with name entered exists, then create client with local TCP socket with same name
+  };
+
   return (
     <>
       <div className="App">
         <header className="App-header">
-          <img src={blockchain} className="App-logo" alt="logo" />
+          <div style={{ paddingTop: "150px" }}>
+            <img src={blockchain} className="App-logo" alt="logo" />
+          </div>
           <p className="App-title">
             Welcome to P2PFS, a Peer to Peer File Sharing system.
           </p>
+
+          <p className="Textfield-title">Register as a New Client</p>
           <div>
             <TextField
               style={{ width: 300 }}
@@ -112,6 +126,39 @@ function PageBody(props: { classes: any }) {
               loadingPosition="end"
             >
               <Typography>Register</Typography>
+            </LoadingButton>
+          </div>
+
+          <p className="Textfield-title">Login to an Existing Client</p>
+          <div>
+            <TextField
+              style={{ width: 300 }}
+              InputProps={{
+                style: { color: "white", fontSize: "20px" },
+                className: classes.input,
+              }}
+              InputLabelProps={{
+                style: { color: "white", fontSize: "20px" },
+                className: classes.input,
+              }}
+              id="client-name"
+              label="Registered Client Name"
+              variant="standard"
+              color="primary"
+              onChange={(event) => setRegisteredClientName(event.target.value)}
+            />
+          </div>
+          <div className="Register-button" style={{ paddingBottom: 100 }}>
+            <LoadingButton
+              variant="contained"
+              size="large"
+              style={{ width: 300, height: 60, borderRadius: 50 }}
+              endIcon={<PersonIcon />}
+              onClick={onLogin}
+              loading={loginLoading}
+              loadingPosition="end"
+            >
+              <Typography>Log in</Typography>
             </LoadingButton>
           </div>
         </header>

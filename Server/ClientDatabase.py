@@ -1,10 +1,10 @@
 import json
 from ClientData import ClientData
 import os
-import asyncio
 
 
 class Database:
+
     DATABASE_PATH = "ClientDatabase.csv"
 
     def open_database(self):
@@ -28,11 +28,14 @@ class Database:
         with open(self.DATABASE_PATH, mode="r") as database:
             clients = (client.rstrip() for client in database)
             clients = (client for client in clients if client)
-            new_clients_list = [client for client in clients if json.loads(client)["name"] != name]
+            new_clients_list = [client for client in clients if json.loads(client)[
+                "name"] != name]
 
         with open(self.DATABASE_PATH, mode="w", newline="") as database:
             for client in new_clients_list:
                 database.write(client + "\n")
+
+    # TODO: update client
 
     def publish_files(self, name, files):
         clients = []
@@ -58,10 +61,3 @@ class Database:
     def delete_database(self):
         if os.path.exists(self.DATABASE_PATH):
             os.remove(self.DATABASE_PATH)
-
-    def str_to_list(self, list_as_str):
-    
-        list_as_list = []
-        for element in list_as_str.replace("]","").replace("[","").replace("'","").replace('"','').split(","):
-            list_as_list.append(element.strip())
-        return list_as_list

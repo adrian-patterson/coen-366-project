@@ -27,10 +27,9 @@ class Client(Thread):
         self.tcp_socket.listen()
 
         while True:
-            client_socket, client_address = self.tcp_socket.accept()
-            print("Peer Connected: " + str(client_address[1]))
+            peer_socket = self.tcp_socket.accept()[0]
             peer_handler = Thread(
-                target=self.handle_peer_request, args=(client_socket,))
+                target=self.handle_peer_request, args=(peer_socket,))
             peer_handler.start()
 
     def udp_init(self):
@@ -48,23 +47,23 @@ class Client(Thread):
         tcp_socket.bind((self.ip_address, 0))
         return tcp_socket
 
-    def handle_peer_request(self, client_socket):
+    def handle_peer_request(self, peer_socket):
         try:
             while True:
-                bytes_received = client_socket.recv(1024)
+                bytes_received = peer_socket.recv(BUFFER_SIZE)
 
                 if bytes_received:
                     if get_message_type(bytes_received) == "DOWNLOAD":
-                        self.send_file_to_peer(bytes_received, client_socket)
+                        self.send_file_to_peer(bytes_received, peer_socket)
                 else:
                     break
 
         except socket.error as e:
             print("Socket Error: " + str(e))
 
-        client_socket.close()
+        peer_socket.close()
 
-    def send_file_to_peer(self, bytes_received, client_socket):
+    def send_file_to_peer(self, bytes_received, peer_socket):
         download = Download(**bytes_to_object(bytes_received))
         file_name = download.file_name
         path_to_file = os.getcwd() + "/ClientFiles/" + file_name
@@ -86,14 +85,14 @@ class Client(Thread):
                         chunk_text += file_content[character]
                         file_end = FileEnd(
                             download.rq, download.file_name, chunk_number, chunk_text)
-                        self.send_message_to_peer(file_end, client_socket)
-                        log(file)
+                        self.send_message_to_peer(file_end, peer_socket)
+                        log(file_end)
                         break
 
                     elif character != 0 and (character + 1) % 200 == 0:
                         file = File(download.rq, download.file_name,
                                     chunk_number, chunk_text)
-                        self.send_message_to_peer(file, client_socket)
+                        self.send_message_to_peer(file, peer_socket)
                         chunk_text = ""
                         chunk_number += 1
                         log(file)
@@ -106,15 +105,11 @@ class Client(Thread):
         self.increment_rq()
         log(message)
 
-    def send_message_to_peer(self, message, client_socket):
+    def send_message_to_peer(self, message, peer_socket):
         bytes_to_send = object_to_bytes(message)
-        client_socket.send(bytes_to_send)
+        peer_socket.send(bytes_to_send)
         self.increment_rq()
         log(message)
-
-    def connect_to_peer(self, peer_ip_address, peer_tcp_socket):
-        self.tcp_socket.connect((peer_ip_address, peer_tcp_socket))
-        return
 
     def get_list_of_available_files(self):
         current_directory = os.getcwd()
