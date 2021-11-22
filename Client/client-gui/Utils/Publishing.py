@@ -69,7 +69,7 @@ class Removed:
     def __str__(self):
         return f"""
     {self.TYPE}
-        RQ:\t\t{self.rq}
+        RQ:\t{self.rq}
         """
 
 

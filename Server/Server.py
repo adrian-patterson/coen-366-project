@@ -4,20 +4,23 @@ import time
 import sys
 from ClientDatabase import Database
 from ServerRequests import ServerRequestHandler
+from Utils.UtilityFunctions import get_ip_address
 
 
 class Server(Thread):
-    HOST = '0.0.0.0'
-    UDP_PORT = 8090
+    
+    UDP_PORT = 5001
     BUFFER_SIZE = 1024
 
     def __init__(self):
         super().__init__()
         self.client_database = Database()
         self.client_list = self.client_database.open_database()
+        self.ip_address = get_ip_address()
         self.udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        self.udp_socket.bind((self.HOST, self.UDP_PORT))
-        print("Server Listening.")
+        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.udp_socket.bind((self.ip_address, self.UDP_PORT))
+        print("Server Listening: " + str(self.udp_socket))
 
     def run(self):
         while True:

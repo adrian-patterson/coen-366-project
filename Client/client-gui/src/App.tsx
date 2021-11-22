@@ -102,16 +102,29 @@ function PageBody(props: { classes: any }) {
   };
 
   const onPublishFiles = () => {
-    console.log("Publish files clicked");
-    console.log("Files to be Published: " + filesSelected.toString());
+    let fileList: string[] = [];
     filesSelected.forEach((fileIndex) => {
-      console.log(`File: ${client?.listOfAvailableFiles[fileIndex]}`);
+      fileList.push(client?.listOfAvailableFiles[fileIndex] ?? "");
+    });
+    fetch("/publish", {
+      method: "POST",
+      body: JSON.stringify({
+        filesSelected: fileList,
+      }),
     });
   };
 
   const onRemoveFiles = () => {
-    console.log("Remove files clicked");
-    console.log("Files to be Removed: " + filesSelected.toString());
+    let fileList: string[] = [];
+    filesSelected.forEach((fileIndex) => {
+      fileList.push(client?.listOfAvailableFiles[fileIndex] ?? "");
+    });
+    fetch("/remove", {
+      method: "POST",
+      body: JSON.stringify({
+        filesSelected: fileList,
+      }),
+    });
   };
 
   const onSearchAllClients = () => {
