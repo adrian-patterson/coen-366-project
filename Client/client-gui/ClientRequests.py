@@ -1,3 +1,4 @@
+import os
 import socket
 from threading import Thread
 from Client import Client
@@ -16,7 +17,8 @@ class RegisterWithServer(Thread):
     def __init__(self, client, server_ip_address):
         super().__init__()
         self.client = client
-        self.client.server_address = (server_ip_address, self.client.SERVER_UDP_PORT)
+        self.client.server_address = (
+            server_ip_address, self.client.SERVER_UDP_PORT)
         self.server_response = None
         self.result = None
         self.response_messages = {
@@ -25,7 +27,7 @@ class RegisterWithServer(Thread):
         }
 
     def run(self):
-        register = Register(self.client.rq, 
+        register = Register(self.client.rq,
                             self.client.name, self.client.ip_address,
                             self.client.udp_socket.getsockname()[1],
                             self.client.tcp_socket.getsockname()[1])
@@ -33,7 +35,8 @@ class RegisterWithServer(Thread):
 
         try:
             self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
-            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+            self.result = self.response_messages[get_message_type(
+                self.server_response[0])]()
 
         except socket.error:
             self.result = "Connection to Server timed out."
@@ -48,7 +51,8 @@ class RegisterWithServer(Thread):
         return True
 
     def register_denied(self):
-        register_denied = RegisterDenied(**bytes_to_object(self.server_response[0]))
+        register_denied = RegisterDenied(
+            **bytes_to_object(self.server_response[0]))
         log(register_denied)
         return register_denied.reason
 
@@ -79,12 +83,14 @@ class PublishFilesToServer(Thread):
         }
 
     def run(self):
-        publish = Publish(self.client.rq, self.client.name, self.list_of_files_to_publish)
+        publish = Publish(self.client.rq, self.client.name,
+                          self.list_of_files_to_publish)
         self.client.send_message_to_server(publish)
 
         try:
             self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
-            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+            self.result = self.response_messages[get_message_type(
+                self.server_response[0])]()
 
         except socket.error:
             self.result = "Connection Timed Out"
@@ -99,7 +105,8 @@ class PublishFilesToServer(Thread):
         return True
 
     def publish_denied(self):
-        publish_denied = PublishDenied(**bytes_to_object(self.server_response[0]))
+        publish_denied = PublishDenied(
+            **bytes_to_object(self.server_response[0]))
         log(publish_denied)
         return publish_denied.reason
 
@@ -117,12 +124,14 @@ class RemoveFilesFromServer(Thread):
         }
 
     def run(self):
-        remove = Remove(self.client.rq, self.client.name, self.list_of_files_to_remove)
+        remove = Remove(self.client.rq, self.client.name,
+                        self.list_of_files_to_remove)
         self.client.send_message_to_server(remove)
 
         try:
             self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
-            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+            self.result = self.response_messages[get_message_type(
+                self.server_response[0])]()
 
         except socket.error:
             self.result = "Connection Timed Out"
@@ -137,7 +146,8 @@ class RemoveFilesFromServer(Thread):
         return True
 
     def remove_denied(self):
-        remove_denied = RemoveDenied(**bytes_to_object(self.server_response[0]))
+        remove_denied = RemoveDenied(
+            **bytes_to_object(self.server_response[0]))
         log(remove_denied)
         return remove_denied.reason
 
@@ -160,7 +170,8 @@ class RetrieveAllClientsFromServer(Thread):
 
         try:
             self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
-            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+            self.result = self.response_messages[get_message_type(
+                self.server_response[0])]()
         except socket.error:
             self.result = "Connection Timed Out"
 
@@ -174,7 +185,8 @@ class RetrieveAllClientsFromServer(Thread):
         return True
 
     def retrieve_error(self):
-        retrieve_error = RetrieveError(**bytes_to_object(self.server_response[0]))
+        retrieve_error = RetrieveError(
+            **bytes_to_object(self.server_response[0]))
         log(retrieve_error)
         return retrieve_error.reason
 
@@ -198,7 +210,8 @@ class RetrieveClientInfoFromServer(Thread):
 
         try:
             self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
-            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+            self.result = self.response_messages[get_message_type(
+                self.server_response[0])]()
         except socket.error:
             self.result = "Connection Timed Out"
 
@@ -207,12 +220,14 @@ class RetrieveClientInfoFromServer(Thread):
         return self.result
 
     def retrieve_infot(self):
-        retrieve_info_response = RetrieveInfoResponse(**bytes_to_object(self.server_response[0]))
+        retrieve_info_response = RetrieveInfoResponse(
+            **bytes_to_object(self.server_response[0]))
         log(retrieve_info_response)
         return True
 
     def retrieve_error(self):
-        retrieve_error = RetrieveError(**bytes_to_object(self.server_response[0]))
+        retrieve_error = RetrieveError(
+            **bytes_to_object(self.server_response[0]))
         log(retrieve_error)
         return retrieve_error.reason
 
@@ -235,7 +250,8 @@ class SearchFileFromDataBase(Thread):
         self.client.send_message_to_server(search_file_request)
 
     def search_file(self):
-        search_file_response = SearchFileResponse(**bytes_to_object(self.server_response[0]))
+        search_file_response = SearchFileResponse(
+            **bytes_to_object(self.server_response[0]))
         log(search_file_response)
         return True
 
@@ -261,11 +277,13 @@ class UpdateClientContact(Thread):
         }
 
     def run(self):
-        update_contact = UpdateContact(self.client.rq, self.client.name, self.new_ip, self.new_udp_socket, self.new_tcp_socket)
+        update_contact = UpdateContact(
+            self.client.rq, self.client.name, self.new_ip, self.new_udp_socket, self.new_tcp_socket)
         self.client.send_message_to_server(update_contact)
         try:
             self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
-            self.result = self.response_messages[get_message_type(self.server_response[0])]()
+            self.result = self.response_messages[get_message_type(
+                self.server_response[0])]()
         except socket.error:
             self.result = "Connection Timed Out"
 
@@ -274,14 +292,17 @@ class UpdateClientContact(Thread):
         return self.result
 
     def update_confirmed(self):
-        update_confirmed = UpdateConfirmed(**bytes_to_object(self.server_response[0]))
+        update_confirmed = UpdateConfirmed(
+            **bytes_to_object(self.server_response[0]))
         log(update_confirmed)
         return True
 
     def update_denied(self):
-        update_denied = UpdateDenied(**bytes_to_object(self.server_response[0]))
+        update_denied = UpdateDenied(
+            **bytes_to_object(self.server_response[0]))
         log(update_denied)
         return update_denied.reason
+
 
 class DownloadFileFromPeer(Thread):
 
@@ -303,24 +324,22 @@ class DownloadFileFromPeer(Thread):
 
     def run(self):
         download = Download(self.client.rq, self.file_name)
-        self.client.connect_to_peer(self.peer_ip_address, self.peer_tcp_socket)
-        self.client.send_message_to_peer(download)
-        self.client.tcp_socket.listen()
-        connection, address = self.client.tcp_socket.accept()
+        tcp_socket = self.client.tcp_init()
+
+        tcp_socket.connect((self.peer_ip_address, self.peer_tcp_socket))
+        self.client.send_message_to_peer(download, tcp_socket)
 
         try:
             while True:
-                self.peer_response = self.client.tcp_socket.recv(BUFFER_SIZE)
-                print(self.peer_response)
-                file_transfer_complete = self.response_messages[get_message_type(self.peer_response)]()
+                self.peer_response = tcp_socket.recv(BUFFER_SIZE)
+                file_transfer_complete = self.response_messages[get_message_type(
+                    self.peer_response)]()
 
                 if file_transfer_complete:
                     break
 
         except socket.error:
             self.result = "Failed to connect to peer."
-
-        self.client.disconnect_from_peer()
 
     def join(self, *args, **kwargs):
         super().join()
@@ -335,15 +354,19 @@ class DownloadFileFromPeer(Thread):
     def file_end(self):
         file_end = FileEnd(**bytes_to_object(self.peer_response))
         self.file_content += file_end.text
+        self.write_out_transferred_file()
+
         self.result = True
         log(file_end)
         return True
+
+    def write_out_transferred_file(self):
+        path_to_file = os.getcwd() + "/ClientFiles/" + self.file_name
+        with open(path_to_file, mode="w") as file:
+            file.writelines(self.file_content)
 
     def download_error(self):
         download_error = DownloadError(**bytes_to_object(self.peer_response))
         self.result = download_error.reason
         log(download_error)
         return True
-
-
-
