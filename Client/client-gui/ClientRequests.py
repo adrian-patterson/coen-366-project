@@ -314,7 +314,6 @@ class DownloadFileFromPeer(Thread):
         self.peer_ip_address = peer_ip_address
         self.peer_tcp_socket = peer_tcp_socket
         self.peer_response = None
-
         self.result = None
         self.response_messages = {
             "FILE": self.file,
@@ -332,8 +331,10 @@ class DownloadFileFromPeer(Thread):
         try:
             while True:
                 self.peer_response = tcp_socket.recv(BUFFER_SIZE)
+
                 file_transfer_complete = self.response_messages[get_message_type(
                     self.peer_response)]()
+                # TODO: if download error occurs
 
                 if file_transfer_complete:
                     break
@@ -355,18 +356,17 @@ class DownloadFileFromPeer(Thread):
         file_end = FileEnd(**bytes_to_object(self.peer_response))
         self.file_content += file_end.text
         self.write_out_transferred_file()
-
         self.result = True
         log(file_end)
         return True
-
-    def write_out_transferred_file(self):
-        path_to_file = os.getcwd() + "/ClientFiles/" + self.file_name
-        with open(path_to_file, mode="w") as file:
-            file.writelines(self.file_content)
 
     def download_error(self):
         download_error = DownloadError(**bytes_to_object(self.peer_response))
         self.result = download_error.reason
         log(download_error)
         return True
+
+    def write_out_transferred_file(self):
+        path_to_file = os.getcwd() + "/ClientFiles/" + self.file_name
+        with open(path_to_file, mode="w") as file:
+            file.writelines(self.file_content)

@@ -35,6 +35,8 @@ class Database:
             for client in new_clients_list:
                 database.write(client + "\n")
 
+    # TODO: update client
+
     def publish_files(self, name, files):
         clients = []
         new_clients_list = []
