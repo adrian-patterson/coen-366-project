@@ -28,7 +28,6 @@ class Client(Thread):
 
         while True:
             client_socket, client_address = self.tcp_socket.accept()
-            print("Peer Connected: " + str(client_address[1]))
             peer_handler = Thread(
                 target=self.handle_peer_request, args=(client_socket,))
             peer_handler.start()
