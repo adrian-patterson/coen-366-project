@@ -5,13 +5,17 @@ from Client import Client
 from Utils.FileTransfer import Download, File, FileEnd, DownloadError
 from Utils.Publishing import Publish, Published, PublishDenied, Remove, Removed, RemoveDenied
 from Utils.Registration import Register, Registered, RegisterDenied, DeRegister
-from Utils.Retrieve import Retrieve, RetrieveAll, RetrieveError, RetrieveInfoRequest, RetrieveInfoResponse, SearchError, SearchFileRequest, SearchFileResponse
+from Utils.Retrieve import Retrieve, RetrieveAll, RetrieveError, RetrieveInfoRequest, RetrieveInfoResponse, SearchError, \
+    SearchFileRequest, SearchFileResponse
 from Utils.UpdateInformation import UpdateConfirmed, UpdateContact, UpdateDenied
 from Utils.UtilityFunctions import bytes_to_object, log, get_message_type
 
 BUFFER_SIZE = 1024
 
 
+# In this class we create a class for each type of transaction a client can make
+
+# First a Client can register to the server
 class RegisterWithServer(Thread):
 
     def __init__(self, client, server_ip_address):
@@ -21,16 +25,19 @@ class RegisterWithServer(Thread):
             server_ip_address, self.client.SERVER_UDP_PORT)
         self.server_response = None
         self.result = None
+        # Output Messages from the server to confirm registration or deny it
         self.response_messages = {
             "REGISTERED": self.registered,
             "REGISTER-DENIED": self.register_denied
         }
 
+    # New register object for each client registered
     def run(self):
         register = Register(self.client.rq,
                             self.client.name, self.client.ip_address,
                             self.client.udp_socket.getsockname()[1],
                             self.client.tcp_socket.getsockname()[1])
+        # Send to server that a client wants to register
         self.client.send_message_to_server(register)
 
         try:
@@ -304,8 +311,9 @@ class UpdateClientContact(Thread):
         return update_denied.reason
 
 
+# This class is used to download a file from a peer
 class DownloadFileFromPeer(Thread):
-
+    # We need the file to be sent, the ip_address of receiver and his tcp_socket
     def __init__(self, client, file_name, peer_ip_address, peer_tcp_socket):
         super().__init__()
         self.client = client
@@ -322,20 +330,20 @@ class DownloadFileFromPeer(Thread):
         }
 
     def run(self):
+        # Create an object download
         download = Download(self.client.rq, self.file_name)
+        # Create a new TCP Socket to connect to the client
         tcp_socket = self.client.tcp_init()
-
+        # Connect the Tcp_socket to the peer_address and his tcp socket
         tcp_socket.connect((self.peer_ip_address, self.peer_tcp_socket))
+        # We can send message to peer containing the download object and the tcp_socket
         self.client.send_message_to_peer(download, tcp_socket)
 
         try:
             while True:
                 self.peer_response = tcp_socket.recv(BUFFER_SIZE)
-
-                file_transfer_complete = self.response_messages[get_message_type(
-                    self.peer_response)]()
+                file_transfer_complete = self.response_messages[get_message_type(self.peer_response)]()
                 # TODO: if download error occurs
-
                 if file_transfer_complete:
                     break
 

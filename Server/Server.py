@@ -8,7 +8,7 @@ from Utils.UtilityFunctions import get_ip_address
 
 
 class Server(Thread):
-    
+    # Server has fixed udp port and buffer size
     UDP_PORT = 5001
     BUFFER_SIZE = 1024
 
