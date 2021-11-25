@@ -4,8 +4,10 @@ from ClientData import ClientData
 from Utils.Registration import Register, Registered, RegisterDenied, DeRegister
 from Utils.UtilityFunctions import *
 from Utils.Publishing import Publish, Published, PublishDenied, Remove, RemoveDenied, Removed
-from Utils.Retrieve import RetrieveAll, Retrieve, RetrieveError, RetrieveInfoRequest, RetrieveInfoResponse, SearchError, SearchFileRequest, SearchFileResponse
+from Utils.Retrieve import RetrieveAll, Retrieve, RetrieveError, RetrieveInfoRequest, RetrieveInfoResponse, SearchError, \
+    SearchFileRequest, SearchFileResponse
 from Utils.UpdateInformation import UpdateDenied, UpdateConfirmed, UpdateContact
+
 
 class ServerRequestHandler(Thread):
 
@@ -64,9 +66,9 @@ class ServerRequestHandler(Thread):
         client_exists = False
         updated_files_list = []
         log(publish)
-        
+
         for client in self.client_list:
-            if  publish.name == client.name:
+            if publish.name == client.name:
                 client_exists = True
                 for file in publish.list_of_files:
                     if file not in client.list_of_available_files:
@@ -97,7 +99,7 @@ class ServerRequestHandler(Thread):
                 for file in remove.list_of_files_to_remove:
                     file_name = file.strip()
                     if file_name in client.list_of_available_files:
-                        updated_list_of_available_files.remove(file_name)                        
+                        updated_list_of_available_files.remove(file_name)
                     else:
                         name_not_matched_list.append(file_name)
                         break
@@ -112,17 +114,16 @@ class ServerRequestHandler(Thread):
             self.client_database.publish_files(remove.name, updated_list_of_available_files)
             log(removed)
 
-
     def retrieve_all(self):
         retireve_all = RetrieveAll(**self.data)
         log(retireve_all)
         registered_client = True
         client_info_list = []
         for client in self.client_list:
-            client_info = {"name":client.name, "ip_address" : client.ip_address, 
-            "tcp_socket": client.tcp_socket, "list_of_available_files":client.list_of_available_files}
+            client_info = {"name": client.name, "ip_address": client.ip_address,
+                           "tcp_socket": client.tcp_socket, "list_of_available_files": client.list_of_available_files}
             client_info_list.append(client_info)
-        
+
         if registered_client:
             retrieve_all = Retrieve(retireve_all.rq, client_info_list)
             self.send_message_to_client(retrieve_all)
@@ -141,14 +142,14 @@ class ServerRequestHandler(Thread):
                 specific_client = client
 
         if specific_client is not None:
-            retrieve_info_response = RetrieveInfoResponse(retrieve_info_request.rq,specific_client.name 
-            , specific_client.ip_address, specific_client.tcp_socket,
-            specific_client.list_of_available_files)
+            retrieve_info_response = RetrieveInfoResponse(retrieve_info_request.rq, specific_client.name
+                                                          , specific_client.ip_address, specific_client.tcp_socket,
+                                                          specific_client.list_of_available_files)
             self.send_message_to_client(retrieve_info_response)
             log(retrieve_info_response)
         elif specific_client is None:
             retrieve_error = RetrieveError(retrieve_info_request.rq, "Client " +
-             " is not registered")
+                                           " is not registered")
             self.send_message_to_client(retrieve_error)
             log(retrieve_error)
         else:
@@ -163,7 +164,7 @@ class ServerRequestHandler(Thread):
         for client in self.client_list:
             if (search_file_request.file_name.strip() not in client.list_of_available_files):
                 continue
-            file_owner = {"name" :client.name, "ip_address" :client.ip_address, "tcp_socket" : client.tcp_socket}
+            file_owner = {"name": client.name, "ip_address": client.ip_address, "tcp_socket": client.tcp_socket}
             file_owner_list.append(file_owner)
 
         if file_owner_list:
@@ -172,7 +173,7 @@ class ServerRequestHandler(Thread):
             log(search_file_response)
         elif not file_owner_list:
             search_error = SearchError(search_file_request.rq,
-            search_file_request.file_name+ " is not published")
+                                       search_file_request.file_name + " is not published")
             self.send_message_to_client(search_error)
             log(search_error)
         else:
@@ -189,7 +190,6 @@ class ServerRequestHandler(Thread):
                 client_exist = True
                 client.set_modification(update_contact.ip_address, update_contact.udp_socket, update_contact.tcp_socket)
 
-
         if client_exist:
             update_confirmed = UpdateConfirmed(update_contact.rq, update_contact.name, update_contact.ip_address,
                                                update_contact.udp_socket, update_contact.tcp_socket)
@@ -197,7 +197,7 @@ class ServerRequestHandler(Thread):
             self.send_message_to_client(update_confirmed)
             log(update_confirmed)
         else:
-            update_denied = UpdateDenied(update_contact.rq, update_contact.name, "Client " + update_contact.name + " is not registered")
+            update_denied = UpdateDenied(update_contact.rq, update_contact.name,
+                                         "Client " + update_contact.name + " is not registered")
             self.send_message_to_client(update_denied)
             log(update_denied)
-
