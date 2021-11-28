@@ -44,7 +44,8 @@ class ServerRequestHandler(Thread):
         client = ClientData(**register.__dict__)
 
         if any(client.name == c.name for c in self.client_list):
-            register_denied = RegisterDenied(register.rq, "Client with same name already registered!")
+            register_denied = RegisterDenied(
+                register.rq, "Client with same name already registered!")
             log(register_denied)
             self.send_message_to_client(register_denied)
         else:
@@ -57,7 +58,8 @@ class ServerRequestHandler(Thread):
 
     def de_register(self):
         de_register = DeRegister(**self.data)
-        self.client_list = [client for client in self.client_list if client.name != de_register.name]
+        self.client_list = [
+            client for client in self.client_list if client.name != de_register.name]
         self.client_database.remove_client(de_register.name)
         log(de_register)
 
@@ -73,16 +75,19 @@ class ServerRequestHandler(Thread):
                 for file in publish.list_of_files:
                     if file not in client.list_of_available_files:
                         client.list_of_available_files.append(file)
+                        self.client_database.update_client(client)
 
                 updated_files_list = client.list_of_available_files
 
         if client_exists:
             published = Published(publish.rq)
             self.send_message_to_client(published)
-            self.client_database.publish_files(publish.name, updated_files_list)
+            self.client_database.publish_files(
+                publish.name, updated_files_list)
             log(published)
         else:
-            publish_denied = PublishDenied(publish.rq, "Client " + publish.name + " is not registered")
+            publish_denied = PublishDenied(
+                publish.rq, "Client " + publish.name + " is not registered")
             self.send_message_to_client(publish_denied)
             log(publish_denied)
 
@@ -105,31 +110,34 @@ class ServerRequestHandler(Thread):
                         break
 
         if name_not_matched_list:
-            remove_denied = RemoveDenied(remove.rq, "One or many files name unmatched.")
+            remove_denied = RemoveDenied(
+                remove.rq, "One or many files name unmatched.")
             self.send_message_to_client(remove_denied)
             log(remove_denied)
         elif client_exist:
             removed = Removed(remove.rq)
             self.send_message_to_client(removed)
-            self.client_database.publish_files(remove.name, updated_list_of_available_files)
+            self.client_database.publish_files(
+                remove.name, updated_list_of_available_files)
             log(removed)
 
     def retrieve_all(self):
         retireve_all = RetrieveAll(**self.data)
         log(retireve_all)
         registered_client = True
-        client_info_list = []
-        for client in self.client_list:
-            client_info = {"name": client.name, "ip_address": client.ip_address,
-                           "tcp_socket": client.tcp_socket, "list_of_available_files": client.list_of_available_files}
-            client_info_list.append(client_info)
 
         if registered_client:
-            retrieve_all = Retrieve(retireve_all.rq, client_info_list)
+            client_json_list = []
+            for c in self.client_list:
+                client_json_list.append(json.dumps(c.__dict__))
+
+            retrieve_all = Retrieve(
+                retireve_all.rq, client_json_list)
             self.send_message_to_client(retrieve_all)
             log(retrieve_all)
         else:
-            retrieve_error = RetrieveError(retireve_all.rq, "Something went wrong")
+            retrieve_error = RetrieveError(
+                retireve_all.rq, "Something went wrong")
             self.send_message_to_client(retrieve_error)
             log(retrieve_error)
 
@@ -142,8 +150,7 @@ class ServerRequestHandler(Thread):
                 specific_client = client
 
         if specific_client is not None:
-            retrieve_info_response = RetrieveInfoResponse(retrieve_info_request.rq, specific_client.name
-                                                          , specific_client.ip_address, specific_client.tcp_socket,
+            retrieve_info_response = RetrieveInfoResponse(retrieve_info_request.rq, specific_client.name, specific_client.ip_address, specific_client.tcp_socket,
                                                           specific_client.list_of_available_files)
             self.send_message_to_client(retrieve_info_response)
             log(retrieve_info_response)
@@ -153,7 +160,8 @@ class ServerRequestHandler(Thread):
             self.send_message_to_client(retrieve_error)
             log(retrieve_error)
         else:
-            retrieve_error = RetrieveError(retrieve_info_request.rq, "Something went wrong")
+            retrieve_error = RetrieveError(
+                retrieve_info_request.rq, "Something went wrong")
             self.send_message_to_client(retrieve_error)
             log(retrieve_error)
 
@@ -164,11 +172,13 @@ class ServerRequestHandler(Thread):
         for client in self.client_list:
             if (search_file_request.file_name.strip() not in client.list_of_available_files):
                 continue
-            file_owner = {"name": client.name, "ip_address": client.ip_address, "tcp_socket": client.tcp_socket}
+            file_owner = {"name": client.name,
+                          "ip_address": client.ip_address, "tcp_socket": client.tcp_socket}
             file_owner_list.append(file_owner)
 
         if file_owner_list:
-            search_file_response = SearchFileResponse(search_file_request.rq, file_owner_list)
+            search_file_response = SearchFileResponse(
+                search_file_request.rq, file_owner_list)
             self.send_message_to_client(search_file_response)
             log(search_file_response)
         elif not file_owner_list:
@@ -177,7 +187,8 @@ class ServerRequestHandler(Thread):
             self.send_message_to_client(search_error)
             log(search_error)
         else:
-            search_error = SearchError(search_file_request.rq, "Something went wrong")
+            search_error = SearchError(
+                search_file_request.rq, "Something went wrong")
             self.send_message_to_client(search_error)
             log(search_error)
 
@@ -188,7 +199,8 @@ class ServerRequestHandler(Thread):
         for client in self.client_list:
             if client.name == update_contact.name:
                 client_exist = True
-                client.set_modification(update_contact.ip_address, update_contact.udp_socket, update_contact.tcp_socket)
+                client.set_modification(
+                    update_contact.ip_address, update_contact.udp_socket, update_contact.tcp_socket)
 
         if client_exist:
             update_confirmed = UpdateConfirmed(update_contact.rq, update_contact.name, update_contact.ip_address,

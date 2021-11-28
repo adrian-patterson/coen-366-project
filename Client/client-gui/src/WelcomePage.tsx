@@ -62,9 +62,25 @@ function PageBody(props: { classes: any }) {
 
   const onLogin = () => {
     setLoginLoading(true);
-    console.log(registeredClientName);
-    // search client on server
-    // if client with name entered exists, then create client with local TCP socket with same name
+
+    fetch("/login", {
+      method: "POST",
+      body: JSON.stringify({
+        name: registeredClientName,
+        serverIpAddress: serverIpAddress,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.login === true) {
+          navigate(`app`);
+        } else {
+          enqueueSnackbar(`User does not exist. Please Register instead.`, {
+            variant: "error" as VariantType,
+          });
+          setLoginLoading(false);
+        }
+      });
   };
 
   return (
@@ -146,6 +162,24 @@ function PageBody(props: { classes: any }) {
               variant="standard"
               color="primary"
               onChange={(event) => setRegisteredClientName(event.target.value)}
+            />
+          </div>
+          <div>
+            <TextField
+              style={{ width: 300 }}
+              InputProps={{
+                style: { color: "white", fontSize: "20px" },
+                className: classes.input,
+              }}
+              InputLabelProps={{
+                style: { color: "white", fontSize: "20px" },
+                className: classes.input,
+              }}
+              id="client-name"
+              label="Server IP Address"
+              variant="standard"
+              color="primary"
+              onChange={(event) => setServerIpAddress(event.target.value)}
             />
           </div>
           <div className="Register-button" style={{ paddingBottom: 100 }}>

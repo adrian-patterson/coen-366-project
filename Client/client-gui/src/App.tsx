@@ -26,6 +26,7 @@ import Collapse from "@mui/material/Collapse";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import UpdateIcon from "@mui/icons-material/Update";
 import DownloadIcon from "@mui/icons-material/Download";
+import { couldStartTrivia } from "typescript";
 
 const Item = styled(Paper)(({ theme }) => ({
   ...theme.typography.body2,
@@ -44,14 +45,28 @@ const styles = {
 export type Client = {
   name: string;
   ipAddress: string;
-  udpSocket: string;
   tcpSocket: string;
   listOfAvailableFiles: string[];
 };
 
+export type MyClient = {
+  name: string;
+  ipAddress: string;
+  tcpSocket: string;
+  udpSocket: string;
+  listOfAvailableFiles: string[];
+};
+
+export type File = {
+  clientName: string;
+  fileName: string;
+  ipAddress: string;
+  tcpSocket: string;
+};
+
 function PageBody(props: { classes: any }) {
   const { enqueueSnackbar } = useSnackbar();
-  const [client, setClient] = useState<Client>();
+  const [client, setClient] = useState<MyClient>();
   const [clientFiles, setClientFiles] = useState<string[]>([]);
   const [clientIpAddress, setClientIpAddress] = useState("");
   const [clientUdpSocket, setClientUdpSocket] = useState("");
@@ -59,7 +74,7 @@ function PageBody(props: { classes: any }) {
   const [filesSelected, setFilesSelected] = useState<number[]>([]);
   const [clientsExpanded, setClientsExpanded] = useState<string[]>([]);
   const [clientsDiscovered, setClientsDiscovered] = useState<Client[]>([]);
-  const [filesDiscovered, setFilesDiscovered] = useState<string[]>([]);
+  const [filesDiscovered, setFilesDiscovered] = useState<File[]>([]);
   const [searchedClient, setSearchedClient] = useState("");
   const [searchedFile, setSearchedFile] = useState("");
   const { classes } = props;
@@ -73,20 +88,10 @@ function PageBody(props: { classes: any }) {
       .then((response) => {
         return response.json();
       })
-      .then((client: Client) => {
+      .then((client: MyClient) => {
         setClient(client);
         setClientFiles(client.listOfAvailableFiles);
       });
-
-    const exClient: Client = {
-      name: "Me",
-      ipAddress: "4352345",
-      listOfAvailableFiles: ["MYYY FILE 1", "MY FILE @", "ETC BB"],
-      udpSocket: "324234",
-      tcpSocket: "324234",
-    };
-    setClient(exClient);
-    setClientFiles(exClient.listOfAvailableFiles);
 
     return () => {
       fetch("/de_register", {
@@ -99,6 +104,48 @@ function PageBody(props: { classes: any }) {
     console.log(
       `IP Address: ${clientIpAddress}\nUDP Socket: ${clientUdpSocket}\nTCP Socket: ${clientTcpSocket}`
     );
+
+    if (
+      !/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/gi.test(
+        clientIpAddress
+      )
+    ) {
+      enqueueSnackbar(`Failed to Update: Invalid IP Address`, {
+        variant: "error" as VariantType,
+      });
+      return;
+    } else if (isNaN(Number(clientUdpSocket))) {
+      enqueueSnackbar(`Failed to Update: Invalid UDP Socket`, {
+        variant: "error" as VariantType,
+      });
+      return;
+    } else if (isNaN(Number(clientTcpSocket))) {
+      enqueueSnackbar(`Failed to Update: Invalid TCP Socket`, {
+        variant: "error" as VariantType,
+      });
+      return;
+    }
+
+    fetch("/update", {
+      method: "POST",
+      body: JSON.stringify({
+        ipAddress: clientIpAddress,
+        udpSocket: clientUdpSocket,
+        tcpSocket: clientTcpSocket,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.update === true) {
+          enqueueSnackbar(`Successfully updated info!`, {
+            variant: "success" as VariantType,
+          });
+        } else {
+          enqueueSnackbar(`Update denied: ${data.update}`, {
+            variant: "error" as VariantType,
+          });
+        }
+      });
   };
 
   const onPublishFiles = () => {
@@ -111,7 +158,19 @@ function PageBody(props: { classes: any }) {
       body: JSON.stringify({
         filesSelected: fileList,
       }),
-    });
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.publish === true) {
+          enqueueSnackbar(`Files published successfully!`, {
+            variant: "success" as VariantType,
+          });
+        } else {
+          enqueueSnackbar(`Failed to publish files: ${data.publish}`, {
+            variant: "error" as VariantType,
+          });
+        }
+      });
   };
 
   const onRemoveFiles = () => {
@@ -124,51 +183,158 @@ function PageBody(props: { classes: any }) {
       body: JSON.stringify({
         filesSelected: fileList,
       }),
-    });
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.remove === true) {
+          enqueueSnackbar(`Files removed successfully!`, {
+            variant: "success" as VariantType,
+          });
+        } else {
+          enqueueSnackbar(`Failed to remove files: ${data.remove}`, {
+            variant: "error" as VariantType,
+          });
+        }
+      });
   };
 
   const onSearchAllClients = () => {
-    console.log("Search all clients clicked");
-    const clients: Client[] = [
-      {
-        name: "Adrian",
-        ipAddress: "127.0.0.1",
-        udpSocket: "8080",
-        tcpSocket: "800",
-        listOfAvailableFiles: ["Legend of Zelda", "Thingy"],
-      },
-      {
-        name: "Ya boi",
-        ipAddress: "127.0.0.1",
-        udpSocket: "8080",
-        tcpSocket: "80000",
-        listOfAvailableFiles: ["Legend of Jawn", "Jawny"],
-      },
-    ];
-    setClientsDiscovered(clients);
-    let files: string[] = [];
-    clients.forEach((client) => {
-      client.listOfAvailableFiles.forEach((file) => {
-        files.push(file);
+    fetch("/retrieveall")
+      .then((response) => response.json())
+      .then((retrieve) => {
+        const clients = retrieve.retrieve as Client[];
+        setClientsDiscovered(clients);
+
+        let files: string[] = [];
+        clients.forEach((client) => {
+          client.listOfAvailableFiles.forEach((file) => {
+            if (!file.includes(file)) {
+              files.push(file);
+            }
+          });
+        });
       });
-    });
-    setFilesDiscovered(files);
   };
 
   const onSearchAllFiles = () => {
-    console.log("Search all files clicked");
+    fetch("/retrieveall")
+      .then((response) => response.json())
+      .then((retrieve) => {
+        const clients = retrieve.retrieve as Client[];
+
+        let files: File[] = [];
+        clients.forEach((c) => {
+          if (c.name !== client?.name)
+            c.listOfAvailableFiles.forEach((file) => {
+              const f: File = {
+                fileName: file,
+                clientName: c.name,
+                ipAddress: c.ipAddress,
+                tcpSocket: c.tcpSocket,
+              };
+              files.push(f);
+            });
+        });
+
+        setFilesDiscovered(files);
+      });
   };
 
   const onSearchClient = () => {
-    console.log("Client searched: " + searchedClient);
+    fetch("/retrieve", {
+      method: "POST",
+      body: JSON.stringify({
+        name: searchedClient,
+      }),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const result = await response.json();
+          enqueueSnackbar(`${searchedClient} not found: ${result.retrieve}`, {
+            variant: "error" as VariantType,
+          });
+          return Promise.reject();
+        } else {
+          return response.json();
+        }
+      })
+      .then((data) => {
+        const newClientsList: Client[] = [
+          {
+            name: data.retrieve.name,
+            ipAddress: data.retrieve.ip_address,
+            listOfAvailableFiles: data.retrieve.list_of_available_files,
+            tcpSocket: data.retrieve.tcp_socket,
+          },
+        ];
+        setClientsDiscovered(newClientsList);
+        enqueueSnackbar(`${searchedClient} found!`, {
+          variant: "success" as VariantType,
+        });
+      });
   };
 
   const onSearchFile = () => {
-    console.log("File searched: " + searchedFile);
-    const searchedFileResult = searchedFile;
-    const sampleresultFile: string = "Result File search!";
-    setFilesDiscovered([sampleresultFile]);
-    //setFile;
+    fetch("/searchfile", {
+      method: "POST",
+      body: JSON.stringify({
+        fileName: searchedFile,
+      }),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const result = await response.json();
+          enqueueSnackbar(`${searchedFile} not found: ${result.searchfile}`, {
+            variant: "error" as VariantType,
+          });
+          return Promise.reject();
+        } else {
+          console.log("It's a 200");
+          return response.json();
+        }
+      })
+      .then(async (data) => {
+        const newFileList: File[] = [];
+        data.searchfile.list_of_clients.forEach((c: any) => {
+          const file: File = {
+            fileName: searchedFile,
+            clientName: c.name,
+            ipAddress: c.ip_address,
+            tcpSocket: c.tcp_socket,
+          };
+          newFileList.push(file);
+        });
+        setFilesDiscovered(newFileList);
+        enqueueSnackbar(`${searchedFile} found!`, {
+          variant: "success" as VariantType,
+        });
+      });
+  };
+
+  const onDownloadFile = (file: File) => {
+    fetch("/download", {
+      method: "POST",
+      body: JSON.stringify({
+        fileName: file.fileName,
+        ipAddress: file.ipAddress,
+        tcpSocket: file.tcpSocket,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.download === true) {
+          enqueueSnackbar(`${file.fileName} downloaded successfully!`, {
+            variant: "success" as VariantType,
+          });
+        } else {
+          enqueueSnackbar(
+            `Failed to download ${file.fileName}: ${data.download}`,
+            {
+              variant: "error" as VariantType,
+            }
+          );
+        }
+      });
   };
 
   const handleToggleFiles = (value: number) => () => {
@@ -195,25 +361,6 @@ function PageBody(props: { classes: any }) {
     }
     setClientsExpanded(newExpanded);
   };
-
-  // let clients: Client[] = [
-  //   {
-  //     rq: 0,
-  //     name: "Adrian",
-  //     ipAddress: "127.0.0.1",
-  //     udpSocket: "8080",
-  //     tcpSocket: "800",
-  //     listOfAvailableFiles: ["Legend of Zelda", "Thingy"],
-  //   },
-  //   {
-  //     rq: 1,
-  //     name: "Ya boi",
-  //     ipAddress: "127.0.0.1",
-  //     udpSocket: "8080",
-  //     tcpSocket: "80000",
-  //     listOfAvailableFiles: ["Legend of Jawn", "Jawny"],
-  //   },
-  // ];
 
   return (
     <>
@@ -547,7 +694,15 @@ function PageBody(props: { classes: any }) {
                           <ListItemIcon>
                             <PersonIcon style={{ color: "white" }} />
                           </ListItemIcon>
-                          <ListItemText primary={client.name} />
+                          <ListItemText
+                            primary={
+                              client.name +
+                              "@" +
+                              client.ipAddress +
+                              ":" +
+                              client.tcpSocket
+                            }
+                          />
                           {clientsExpanded.indexOf(client.name) !== -1 ? (
                             <ExpandLess />
                           ) : (
@@ -657,12 +812,12 @@ function PageBody(props: { classes: any }) {
 
                     return (
                       <ListItem
-                        key={file}
+                        key={file.fileName}
                         secondaryAction={
                           <IconButton>
                             <DownloadIcon
                               style={{ color: "white" }}
-                              onClick={() => console.log("Download " + file)}
+                              onClick={() => onDownloadFile(file)}
                             />
                           </IconButton>
                         }
@@ -676,7 +831,15 @@ function PageBody(props: { classes: any }) {
                           </ListItemIcon>
                           <ListItemText
                             id={labelId}
-                            primary={file}
+                            primary={
+                              file.fileName +
+                              ", " +
+                              file.clientName +
+                              "@" +
+                              file.ipAddress +
+                              ":" +
+                              file.tcpSocket
+                            }
                             style={{ color: "white" }}
                           />
                         </ListItemButton>

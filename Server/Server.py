@@ -10,14 +10,15 @@ from Utils.UtilityFunctions import get_ip_address
 class Server(Thread):
     # Server has fixed udp port and buffer size
     UDP_PORT = 5001
-    BUFFER_SIZE = 1024
+    BUFFER_SIZE = 4096
 
     def __init__(self):
         super().__init__()
         self.client_database = Database()
         self.client_list = self.client_database.open_database()
         self.ip_address = get_ip_address()
-        self.udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        self.udp_socket = socket.socket(
+            family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.udp_socket.bind((self.ip_address, self.UDP_PORT))
         print("Server Listening: " + str(self.udp_socket))
@@ -26,7 +27,8 @@ class Server(Thread):
         while True:
             bytes_received = self.udp_socket.recvfrom(self.BUFFER_SIZE)
             if bytes_received:
-                server_request_handler = ServerRequestHandler(bytes_received, self.client_list, self.udp_socket)
+                server_request_handler = ServerRequestHandler(
+                    bytes_received, self.client_list, self.udp_socket)
                 server_request_handler.start()
                 server_request_handler.join()
                 self.client_list = server_request_handler.client_list
