@@ -115,7 +115,8 @@ class Client(Thread):
         os.chdir(path)
         files = os.listdir()
         for i in files:
-            self.list_of_available_files.append(i)
+            if i.endswith('.txt') and not i in self.list_of_available_files:
+                self.list_of_available_files.append(i)
         os.chdir(current_directory)
 
     def increment_rq(self):

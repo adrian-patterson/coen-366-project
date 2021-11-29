@@ -15,6 +15,12 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/app")
+def app_page():
+    client.get_list_of_available_files()
+    return render_template("index.html")
+
+
 @app.route("/client", methods=["GET"])
 def get_client_info():
     return {
@@ -57,9 +63,9 @@ def retrieve_all():
             if c_json["name"] != client.name:
                 client_json_list.append({'name': c_json["name"], 'ipAddress': c_json["ip_address"],
                                         'tcpSocket': c_json["tcp_socket"], 'listOfAvailableFiles': c_json["list_of_available_files"]})
-        return {'retrieve': client_json_list}
+        return {'retrieve': client_json_list}, 200
     else:
-        return {'retrieve': result}
+        return {'retrieve': result}, 400
 
 
 @app.route("/searchfile", methods=["POST"])

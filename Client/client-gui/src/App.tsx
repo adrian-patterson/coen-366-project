@@ -16,7 +16,8 @@ import Paper from "@mui/material/Paper";
 import LoadingButton from "@mui/lab/LoadingButton";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Typography } from "@mui/material";
+import { Tooltip, Typography } from "@mui/material";
+import { useNavigate } from "react-router";
 import TextField from "@material-ui/core/TextField";
 import withStyles from "@material-ui/styles/withStyles";
 import IconButton from "@mui/material/IconButton";
@@ -26,7 +27,7 @@ import Collapse from "@mui/material/Collapse";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import UpdateIcon from "@mui/icons-material/Update";
 import DownloadIcon from "@mui/icons-material/Download";
-import { couldStartTrivia } from "typescript";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 const Item = styled(Paper)(({ theme }) => ({
   ...theme.typography.body2,
@@ -78,9 +79,10 @@ function PageBody(props: { classes: any }) {
   const [searchedClient, setSearchedClient] = useState("");
   const [searchedFile, setSearchedFile] = useState("");
   const { classes } = props;
+  const navigate = useNavigate();
 
   useEffect(() => {
-    enqueueSnackbar("Registration Successful!", {
+    enqueueSnackbar("Registered with Server!", {
       variant: "success" as VariantType,
     });
 
@@ -100,11 +102,13 @@ function PageBody(props: { classes: any }) {
     };
   }, []);
 
-  const onUpdateUserInfo = () => {
-    console.log(
-      `IP Address: ${clientIpAddress}\nUDP Socket: ${clientUdpSocket}\nTCP Socket: ${clientTcpSocket}`
-    );
+  const onBack = () => {
+    fetch("/de_register", {
+      method: "POST",
+    }).then(() => navigate(`/`));
+  };
 
+  const onUpdateUserInfo = () => {
     if (
       !/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/gi.test(
         clientIpAddress
@@ -218,7 +222,17 @@ function PageBody(props: { classes: any }) {
 
   const onSearchAllFiles = () => {
     fetch("/retrieveall")
-      .then((response) => response.json())
+      .then(async (response) => {
+        if (!response.ok) {
+          const result = await response.json();
+          enqueueSnackbar(`${searchedClient} not found: ${result.retrieve}`, {
+            variant: "error" as VariantType,
+          });
+          return Promise.reject();
+        } else {
+          return response.json();
+        }
+      })
       .then((retrieve) => {
         const clients = retrieve.retrieve as Client[];
 
@@ -289,7 +303,6 @@ function PageBody(props: { classes: any }) {
           });
           return Promise.reject();
         } else {
-          console.log("It's a 200");
           return response.json();
         }
       })
@@ -365,7 +378,22 @@ function PageBody(props: { classes: any }) {
   return (
     <>
       <div className="App">
-        <header className="App-page-header">Time to get transferring.</header>
+        <Grid container spacing={3} style={{ paddingTop: "40px" }}>
+          <Grid item xs>
+            <Tooltip title="De-Register">
+              <ArrowBackIcon
+                style={{ color: "white", marginBottom: "40px" }}
+                onClick={() => onBack()}
+              />
+            </Tooltip>
+          </Grid>
+          <Grid item xs={6}>
+            <header className="App-page-header">
+              Time to get transferring.
+            </header>
+          </Grid>
+          <Grid item xs></Grid>
+        </Grid>
 
         <Box
           sx={{ width: "100%" }}
