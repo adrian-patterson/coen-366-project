@@ -104,8 +104,6 @@ def update():
     udp_socket = update_request["udpSocket"]
     tcp_socket = update_request["tcpSocket"]
     client.ip_address = ip_address
-    client.udp_socket = client.udp_init(int(udp_socket))
-    client.tcp_socket = client.tcp_init(int(tcp_socket))
 
     update = UpdateClientContact(
         client, ip_address, udp_socket, tcp_socket)
@@ -120,7 +118,8 @@ def download():
     ip_address = download_request["ipAddress"]
     tcp_socket = download_request["tcpSocket"]
 
-    download = DownloadFileFromPeer(client, file_name, ip_address, tcp_socket)
+    download = DownloadFileFromPeer(
+        client, file_name, ip_address, int(tcp_socket))
     download.start()
     return {'download': download.join()}
 
