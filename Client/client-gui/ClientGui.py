@@ -171,7 +171,7 @@ def shutdown():
 
 
 def start():
-    app.run(host='', threaded=True, port=0, debug=True)
+    app.run(host='', threaded=True, port=5002, debug=True)
 
 
 def stop():
