@@ -2,7 +2,7 @@ import time
 from Client import Client
 from ClientRequests import *
 
-MY_IP_ADDRESS = '192.168.1.118'
+MY_IP_ADDRESS = '10.0.0.12'
 
 C1 = Client()
 C1.name = "Test 1"
@@ -35,10 +35,22 @@ def RemoveFiles(client, files):
     r.join()
 
 
-def RetrieveAll(client):
+def RetrieveAllClients(client):
     j = RetrieveAllClientsFromServer(client)
     j.start()
     j.join()
+
+
+def RetrieveClient(client, client_name):
+    r = RetrieveClientInfoFromServer(client, client_name)
+    r.start()
+    r.join()
+
+
+def SearchFile(client, file_name):
+    s = SearchFileFromServer(client, file_name)
+    s.start()
+    s.join()
 
 
 def DownloadFile(client, file_name, peer_ip_address, peer_tcp_socket):
@@ -60,13 +72,24 @@ if __name__ == "__main__":
 
     RemoveFiles(C1, ["Test.txt", "Test4.txt"])
 
-    time.sleep(5)
+    DownloadFile(C1, "Test5.txt", C2.ip_address,
+                 int(C2.tcp_socket.getsockname()[1]))
 
-    DownloadFile(C1, "Test500.txt", C2.ip_address, int(C2.tcp_socket.getsockname()[1]))
+    RetrieveAllClients(C1)
+    RetrieveAllClients(C2)
 
-    RetrieveAll(C1)
-    RetrieveAll(C2)
-    time.sleep(5)
+    time.sleep(1)
+
+    PublishFiles(C2, ["Hellooooo update"])
+
+    SearchFile(C2, "Hellooooo update")
+    SearchFile(C2, "Test2.txt")
+
+    time.sleep(1)
+
+    RetrieveClient(C1, "Test 1")
+
+    time.sleep(1)
 
     DeRegisterClient(C1)
     DeRegisterClient(C2)

@@ -10,12 +10,9 @@ from Utils.Retrieve import Retrieve, RetrieveAll, RetrieveError, RetrieveInfoReq
 from Utils.UpdateInformation import UpdateConfirmed, UpdateContact, UpdateDenied
 from Utils.UtilityFunctions import bytes_to_object, log, get_message_type
 
-BUFFER_SIZE = 1024
+BUFFER_SIZE = 4096
 
 
-# In this class we create a class for each type of transaction a client can make
-
-# First a Client can register to the server
 class RegisterWithServer(Thread):
 
     def __init__(self, client, server_ip_address):
@@ -25,19 +22,16 @@ class RegisterWithServer(Thread):
             server_ip_address, self.client.SERVER_UDP_PORT)
         self.server_response = None
         self.result = None
-        # Output Messages from the server to confirm registration or deny it
         self.response_messages = {
             "REGISTERED": self.registered,
             "REGISTER-DENIED": self.register_denied
         }
 
-    # New register object for each client registered
     def run(self):
         register = Register(self.client.rq,
                             self.client.name, self.client.ip_address,
                             self.client.udp_socket.getsockname()[1],
                             self.client.tcp_socket.getsockname()[1])
-        # Send to server that a client wants to register
         self.client.send_message_to_server(register)
 
         try:
@@ -189,7 +183,7 @@ class RetrieveAllClientsFromServer(Thread):
     def retrieve(self):
         retrieve = Retrieve(**bytes_to_object(self.server_response[0]))
         log(retrieve)
-        return True
+        return retrieve.list_of_clients
 
     def retrieve_error(self):
         retrieve_error = RetrieveError(
@@ -230,7 +224,7 @@ class RetrieveClientInfoFromServer(Thread):
         retrieve_info_response = RetrieveInfoResponse(
             **bytes_to_object(self.server_response[0]))
         log(retrieve_info_response)
-        return True
+        return retrieve_info_response
 
     def retrieve_error(self):
         retrieve_error = RetrieveError(
@@ -239,7 +233,7 @@ class RetrieveClientInfoFromServer(Thread):
         return retrieve_error.reason
 
 
-class SearchFileFromDataBase(Thread):
+class SearchFileFromServer(Thread):
 
     def __init__(self, client, file_name):
         super().__init__()
@@ -256,11 +250,22 @@ class SearchFileFromDataBase(Thread):
         search_file_request = SearchFileRequest(self.client.rq, self.file_name)
         self.client.send_message_to_server(search_file_request)
 
+        try:
+            self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
+            self.result = self.response_messages[get_message_type(
+                self.server_response[0])]()
+        except socket.error:
+            self.result = "Connection Timed Out"
+
+    def join(self, *args, **kwargs):
+        super().join()
+        return self.result
+
     def search_file(self):
         search_file_response = SearchFileResponse(
             **bytes_to_object(self.server_response[0]))
         log(search_file_response)
-        return True
+        return search_file_response
 
     def search_error(self):
         search_error = SearchError(**bytes_to_object(self.server_response[0]))
@@ -287,6 +292,7 @@ class UpdateClientContact(Thread):
         update_contact = UpdateContact(
             self.client.rq, self.client.name, self.new_ip, self.new_udp_socket, self.new_tcp_socket)
         self.client.send_message_to_server(update_contact)
+
         try:
             self.server_response = self.client.udp_socket.recvfrom(BUFFER_SIZE)
             self.result = self.response_messages[get_message_type(
@@ -311,9 +317,7 @@ class UpdateClientContact(Thread):
         return update_denied.reason
 
 
-# This class is used to download a file from a peer
 class DownloadFileFromPeer(Thread):
-    # We need the file to be sent, the ip_address of receiver and his tcp_socket
     def __init__(self, client, file_name, peer_ip_address, peer_tcp_socket):
         super().__init__()
         self.client = client
@@ -330,24 +334,23 @@ class DownloadFileFromPeer(Thread):
         }
 
     def run(self):
-        # Create an object download
         download = Download(self.client.rq, self.file_name)
-        # Create a new TCP Socket to connect to the client
-        tcp_socket = self.client.tcp_init()
-        # Connect the Tcp_socket to the peer_address and his tcp socket
-        tcp_socket.connect((self.peer_ip_address, self.peer_tcp_socket))
-        # We can send message to peer containing the download object and the tcp_socket
-        self.client.send_message_to_peer(download, tcp_socket)
 
+        tcp_socket = self.client.tcp_init(0)
         try:
+            tcp_socket.connect((self.peer_ip_address, self.peer_tcp_socket))
+            tcp_socket.settimeout(3)
+            self.client.send_message_to_peer(download, tcp_socket)
+
             while True:
                 self.peer_response = tcp_socket.recv(BUFFER_SIZE)
-                file_transfer_complete = self.response_messages[get_message_type(self.peer_response)]()
-                # TODO: if download error occurs
+                file_transfer_complete = self.response_messages[get_message_type(
+                    self.peer_response)]()
+
                 if file_transfer_complete:
                     break
 
-        except socket.error:
+        except socket.error as e:
             self.result = "Failed to connect to peer."
 
     def join(self, *args, **kwargs):

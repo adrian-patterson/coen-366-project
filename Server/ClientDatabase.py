@@ -35,7 +35,25 @@ class Database:
             for client in new_clients_list:
                 database.write(client + "\n")
 
-    # TODO: update client
+    def update_client(self, updated_client):
+        clients = []
+        new_clients_list = []
+
+        with open(self.DATABASE_PATH, mode="r") as database:
+            clients = (client.rstrip() for client in database)
+            clients = (client for client in clients if client)
+
+            for client_json in clients:
+                if client_json:
+                    client = json.loads(client_json)
+                    if client["name"] == updated_client.name:
+                        new_clients_list.append(json.dumps(client))
+                    else:
+                        new_clients_list.append(client_json)
+
+        with open(self.DATABASE_PATH, mode="w", newline="") as database:
+            for client in new_clients_list:
+                database.write(client + "\n")
 
     def publish_files(self, name, files):
         clients = []
