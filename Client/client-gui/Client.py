@@ -89,7 +89,7 @@ class Client(Thread):
                             download.rq, download.file_name, chunk_number, chunk_text)
                         self.send_message_to_peer(file_end, peer_socket)
                         break
-                    elif character != 0 and (character + 1) % 200 == 0:
+                    elif character != 0 and (character % 200) == 0:
                         file = File(download.rq, download.file_name,
                                     chunk_number, chunk_text)
                         self.send_message_to_peer(file, peer_socket)
