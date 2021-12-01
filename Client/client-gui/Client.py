@@ -95,6 +95,12 @@ class Client(Thread):
                         self.send_message_to_peer(file, peer_socket)
                         chunk_text = ""
                         chunk_number += 1
+
+                        try:
+                            response = peer_socket.recv(BUFFER_SIZE)
+                        except socket.error as e:
+                            print("Socket Error: " + str(e))
+                        
                     chunk_text += file_content[character]
 
     def send_message_to_server(self, message):
