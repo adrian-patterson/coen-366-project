@@ -343,12 +343,14 @@ class DownloadFileFromPeer(Thread):
             self.client.send_message_to_peer(download, tcp_socket)
 
             while True:
-                self.peer_response = tcp_socket.recv(BUFFER_SIZE)
+                self.peer_response = tcp_socket.recv(BUFFER_SIZE)                
                 file_transfer_complete = self.response_messages[get_message_type(
                     self.peer_response)]()
 
                 if file_transfer_complete:
                     break
+                else:
+                    tcp_socket.send('ACK'.encode())
 
         except socket.error as e:
             self.result = "Failed to connect to peer."
