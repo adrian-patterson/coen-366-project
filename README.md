@@ -1,6 +1,6 @@
 # Running a Virtual Environment
 * Enter the following command (in CMD on windows)
-  > py -m venv env && .\env\Scripts\activate && pip install requests && pip install flask
+  > py -m venv env && .\env\Scripts\activate && pip install requests && pip install flask && python ClientGui.py
 
 # Code Convention
 * For class names use `PascalCase`
